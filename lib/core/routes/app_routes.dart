@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../features/authentication/screens/auth_gate.dart';
+import '../../features/authentication/screens/forgot_password_screen.dart';
+import '../../features/authentication/screens/login_screen.dart';
+import '../../features/authentication/screens/register_screen.dart';
+
 class AppRoutes {
   AppRoutes._();
 
-  // Startup
-  static const String splash = '/';
-  static const String onboarding = '/onboarding';
-
-  // Authentication
+  static const String auth = '/auth';
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
 
-  // Main
+  // Will be added in later phases.
   static const String home = '/home';
   static const String firstAid = '/first-aid';
   static const String emergency = '/emergency';
@@ -22,6 +23,11 @@ class AppRoutes {
   static const String notifications = '/notifications';
 
   static Map<String, WidgetBuilder> get routes {
-    return {};
+    return {
+      auth: (_) => const AuthGate(),
+      login: (_) => const LoginScreen(),
+      register: (_) => const RegisterScreen(),
+      forgotPassword: (_) => const ForgotPasswordScreen(),
+    };
   }
 }

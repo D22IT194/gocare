@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
-import 'features/onboarding/screens/onboarding_screen.dart';
 
 class GoCareApp extends StatelessWidget {
   const GoCareApp({super.key});
@@ -9,13 +9,15 @@ class GoCareApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-
       title: 'GoCare',
+
+      debugShowCheckedModeBanner: false,
 
       theme: AppTheme.lightTheme,
 
-      home: const OnboardingScreen(),
+      initialRoute: AppRoutes.auth,
+
+      routes: AppRoutes.routes,
     );
   }
 }
