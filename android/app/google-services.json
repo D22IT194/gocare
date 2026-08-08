@@ -50,6 +50,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "761218317880-ivaq7gv558l7gf1tsag54slucsjt6pcb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.gocare",
+            "certificate_hash": "f60887ba8add9b9afd26e0f9a7ae31f4437a19ec"
+          }
+        },
+        {
           "client_id": "761218317880-tg9gr3ker575pjlfkcafvfo27g7ndp60.apps.googleusercontent.com",
           "client_type": 3
         }

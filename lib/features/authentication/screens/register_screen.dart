@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/routes/app_routes.dart';
 import '../../../core/widgets/app_button.dart';
+
 import '../../../core/widgets/app_text_field.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_header.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -51,6 +52,35 @@ class _RegisterScreenState
       email: _emailController.text,
       password: _passwordController.text,
     );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (success) {
+      Navigator.pop(context);
+      return;
+    }
+
+    if (authProvider.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            authProvider.errorMessage!,
+          ),
+        ),
+      );
+
+      authProvider.clearError();
+    }
+  }
+
+  Future<void> _googleSignIn() async {
+    FocusScope.of(context).unfocus();
+
+    final authProvider = context.read<AuthProvider>();
+
+    final success = await authProvider.signInWithGoogle();
 
     if (!mounted) {
       return;
@@ -197,6 +227,37 @@ class _RegisterScreenState
                     onPressed: _register,
                   ),
 
+                  const SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Divider(color: Color(0xFFE4E7EC)),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OR',
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const Expanded(
+                        child: Divider(color: Color(0xFFE4E7EC)),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  GoogleSignInButton(
+                    isLoading: authProvider.isLoading,
+                    onPressed: _googleSignIn,
+                    text: 'Sign up with Google',
+                  ),
+
                   const SizedBox(height: 18),
 
                   Row(
@@ -222,6 +283,7 @@ class _RegisterScreenState
       ),
     );
   }
+
 
   String? _validateName(String? value) {
     if (value == null || value.trim().isEmpty) {

@@ -6,6 +6,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_header.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,6 +43,30 @@ class _LoginScreenState extends State<LoginScreen> {
       email: _emailController.text,
       password: _passwordController.text,
     );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!success && authProvider.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            authProvider.errorMessage!,
+          ),
+        ),
+      );
+
+      authProvider.clearError();
+    }
+  }
+
+  Future<void> _googleSignIn() async {
+    FocusScope.of(context).unfocus();
+
+    final authProvider = context.read<AuthProvider>();
+
+    final success = await authProvider.signInWithGoogle();
 
     if (!mounted) {
       return;
@@ -110,10 +135,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'Enter your password',
                       prefixIcon: Icons.lock_outline,
                       obscureText: _obscurePassword,
-                      textInputAction:
-                      TextInputAction.done,
+                      textInputAction: TextInputAction.done,
                       validator: _validatePassword,
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                      ),
                     ),
+
 
                     Align(
                       alignment: Alignment.centerRight,
@@ -136,6 +173,36 @@ class _LoginScreenState extends State<LoginScreen> {
                       text: 'Login',
                       isLoading: authProvider.isLoading,
                       onPressed: _login,
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(color: Color(0xFFE4E7EC)),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'OR',
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                          child: Divider(color: Color(0xFFE4E7EC)),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    GoogleSignInButton(
+                      isLoading: authProvider.isLoading,
+                      onPressed: _googleSignIn,
                     ),
 
                     const SizedBox(height: 20),
@@ -169,6 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
 
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';

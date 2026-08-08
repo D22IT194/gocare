@@ -122,7 +122,34 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> signInWithGoogle() async {
+    _setLoading();
+
+    try {
+      final credential = await _authService.signInWithGoogle();
+
+      if (credential == null) {
+        // User cancelled Google sign-in
+        _status = _user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+        _errorMessage = null;
+        notifyListeners();
+        return false;
+      }
+
+      return true;
+    } on FirebaseAuthException catch (error) {
+      _setError(_firebaseErrorMessage(error));
+      return false;
+    } catch (e, stack) {
+      debugPrint('Google Sign-In failed with error: $e\n$stack');
+      _setError('Google sign-in failed. Please ensure SHA-1 key fingerprint is added to Firebase Console.');
+      return false;
+    }
+  }
+
+
   Future<bool> forgotPassword({
+
     required String email,
   }) async {
     _setLoading();
@@ -228,8 +255,14 @@ class AuthProvider extends ChangeNotifier {
       case 'weak-password':
         return 'Password is too weak.';
 
+      case 'account-exists-with-different-credential':
+        return 'An account already exists with a different sign-in provider.';
+
+      case 'popup-closed-by-user':
+        return 'Sign-in popup was closed before completing sign in.';
+
       case 'operation-not-allowed':
-        return 'Email/password authentication is not enabled.';
+        return 'This sign-in method is not enabled in Firebase.';
 
       case 'too-many-requests':
         return 'Too many attempts. Please try again later.';
