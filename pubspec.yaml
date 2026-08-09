@@ -39,6 +39,15 @@ dependencies:
   google_sign_in: ^6.2.2
   provider: ^6.1.5+1
   shared_preferences: ^2.5.5
+  url_launcher: ^6.3.2
+  geolocator: ^14.0.3
+  http: ^1.5.0
+  cloud_firestore: ^6.0.0
+  image_picker: ^1.2.3
+  firebase_storage: ^13.4.6
+  share_plus: ^13.3.0
+  path_provider: ^2.1.6
+  pdf: ^3.12.0
 
 dev_dependencies:
   flutter_test:
@@ -50,6 +59,26 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: assets/icons/app_logo.png
+  adaptive_icon_background: "#1976D2"
+  adaptive_icon_foreground: assets/icons/app_logo.png
+  web:
+    generate: true
+    image_path: assets/icons/app_logo.png
+    background_color: "#1976D2"
+    theme_color: "#1976D2"
+  windows:
+    generate: true
+    image_path: assets/icons/app_logo.png
+  macos:
+    generate: true
+    image_path: assets/icons/app_logo.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -61,6 +90,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/icons/app_logo.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

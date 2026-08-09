@@ -6,18 +6,11 @@ import 'package:flutter/foundation.dart';
 import '../models/app_user.dart';
 import '../services/auth_service.dart';
 
-enum AuthStatus {
-  initial,
-  loading,
-  authenticated,
-  unauthenticated,
-  error,
-}
+enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
 class AuthProvider extends ChangeNotifier {
-  AuthProvider({
-    AuthService? authService,
-  }) : _authService = authService ?? AuthService() {
+  AuthProvider({AuthService? authService})
+    : _authService = authService ?? AuthService() {
     _initialize();
   }
 
@@ -37,11 +30,9 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isLoading => _status == AuthStatus.loading;
 
-  bool get isAuthenticated =>
-      _status == AuthStatus.authenticated;
+  bool get isAuthenticated => _status == AuthStatus.authenticated;
 
-  bool get isUnauthenticated =>
-      _status == AuthStatus.unauthenticated;
+  bool get isUnauthenticated => _status == AuthStatus.unauthenticated;
 
   Future<void> _initialize() async {
     try {
@@ -67,9 +58,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void _handleAuthStateChanged(User? firebaseUser) {
-    debugPrint(
-      'Auth state changed: ${firebaseUser?.email ?? 'SIGNED OUT'}',
-    );
+    debugPrint('Auth state changed: ${firebaseUser?.email ?? 'SIGNED OUT'}');
 
     if (firebaseUser == null) {
       _user = null;
@@ -99,19 +88,13 @@ class AuthProvider extends ChangeNotifier {
   // LOGIN
   // ------------------------------------------------------------
 
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     _setLoading();
 
     try {
       debugPrint('LOGIN START: ${email.trim()}');
 
-      await _authService.login(
-        email: email,
-        password: password,
-      );
+      await _authService.login(email: email, password: password);
 
       debugPrint('LOGIN SUCCESS');
 
@@ -134,9 +117,7 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } on FirebaseAuthException catch (error) {
-      debugPrint(
-        'LOGIN FIREBASE ERROR: ${error.code} - ${error.message}',
-      );
+      debugPrint('LOGIN FIREBASE ERROR: ${error.code} - ${error.message}');
 
       _setError(_firebaseErrorMessage(error));
 
@@ -145,9 +126,7 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('LOGIN ERROR: $error');
       debugPrint('$stackTrace');
 
-      _setError(
-        'Something went wrong. Please try again.',
-      );
+      _setError('Something went wrong. Please try again.');
 
       return false;
     }
@@ -185,15 +164,11 @@ class AuthProvider extends ChangeNotifier {
         return true;
       }
 
-      _setError(
-        'Unable to create your account.',
-      );
+      _setError('Unable to create your account.');
 
       return false;
     } on FirebaseAuthException catch (error) {
-      debugPrint(
-        'REGISTER FIREBASE ERROR: ${error.code} - ${error.message}',
-      );
+      debugPrint('REGISTER FIREBASE ERROR: ${error.code} - ${error.message}');
 
       _setError(_firebaseErrorMessage(error));
 
@@ -202,9 +177,7 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('REGISTER ERROR: $error');
       debugPrint('$stackTrace');
 
-      _setError(
-        'Something went wrong. Please try again.',
-      );
+      _setError('Something went wrong. Please try again.');
 
       return false;
     }
@@ -220,8 +193,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       debugPrint('GOOGLE SIGN-IN START');
 
-      final credential =
-          await _authService.signInWithGoogle();
+      final credential = await _authService.signInWithGoogle();
 
       if (credential == null) {
         debugPrint('GOOGLE SIGN-IN CANCELLED');
@@ -251,15 +223,11 @@ class AuthProvider extends ChangeNotifier {
         return true;
       }
 
-      _setError(
-        'Google sign-in failed. Please try again.',
-      );
+      _setError('Google sign-in failed. Please try again.');
 
       return false;
     } on FirebaseAuthException catch (error) {
-      debugPrint(
-        'GOOGLE FIREBASE ERROR: ${error.code} - ${error.message}',
-      );
+      debugPrint('GOOGLE FIREBASE ERROR: ${error.code} - ${error.message}');
 
       _setError(_firebaseErrorMessage(error));
 
@@ -268,9 +236,7 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('GOOGLE SIGN-IN ERROR: $error');
       debugPrint('$stackTrace');
 
-      _setError(
-        'Google sign-in failed. Please try again.',
-      );
+      _setError('Google sign-in failed. Please try again.');
 
       return false;
     }
@@ -280,15 +246,11 @@ class AuthProvider extends ChangeNotifier {
   // FORGOT PASSWORD
   // ------------------------------------------------------------
 
-  Future<bool> forgotPassword({
-    required String email,
-  }) async {
+  Future<bool> forgotPassword({required String email}) async {
     _setLoading();
 
     try {
-      await _authService.sendPasswordResetEmail(
-        email: email,
-      );
+      await _authService.sendPasswordResetEmail(email: email);
 
       _status = AuthStatus.unauthenticated;
       _errorMessage = null;
@@ -303,9 +265,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (error) {
       debugPrint('FORGOT PASSWORD ERROR: $error');
 
-      _setError(
-        'Unable to send reset email. Please try again.',
-      );
+      _setError('Unable to send reset email. Please try again.');
 
       return false;
     }
@@ -327,9 +287,69 @@ class AuthProvider extends ChangeNotifier {
     } catch (error) {
       debugPrint('EMAIL VERIFICATION ERROR: $error');
 
-      _setError(
-        'Unable to send verification email.',
+      _setError('Unable to send verification email.');
+
+      return false;
+    }
+  }
+
+  Future<bool> updateProfile({
+    required String displayName,
+    required String photoUrl,
+    required String email,
+    String? phoneNumber,
+  }) async {
+    _setLoading();
+
+    try {
+      await _authService.updateProfile(
+        displayName: displayName,
+        photoUrl: photoUrl,
       );
+
+      if (_user != null && email.trim() != _user!.email) {
+        await _authService.updateEmail(email: email);
+      }
+
+      await refreshUser();
+      _user = _user?.copyWith(phoneNumber: phoneNumber);
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      notifyListeners();
+
+      return true;
+    } on FirebaseAuthException catch (error) {
+      _setError(_firebaseErrorMessage(error));
+
+      return false;
+    } catch (error) {
+      debugPrint('UPDATE PROFILE ERROR: $error');
+
+      _setError('Unable to update profile. Please try again.');
+
+      return false;
+    }
+  }
+
+  Future<bool> updatePassword({required String password}) async {
+    _setLoading();
+
+    try {
+      await _authService.updatePassword(password: password);
+
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      notifyListeners();
+
+      return true;
+    } on FirebaseAuthException catch (error) {
+      _setError(_firebaseErrorMessage(error));
+
+      return false;
+    } catch (error) {
+      debugPrint('UPDATE PASSWORD ERROR: $error');
+
+      _setError('Unable to change password. Please try again.');
 
       return false;
     }
@@ -355,9 +375,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (error) {
       debugPrint('LOGOUT ERROR: $error');
 
-      _setError(
-        'Unable to logout. Please try again.',
-      );
+      _setError('Unable to logout. Please try again.');
 
       return false;
     }
@@ -463,8 +481,7 @@ class AuthProvider extends ChangeNotifier {
         return 'Please login again to continue.';
 
       default:
-        return error.message ??
-            'Authentication failed. Please try again.';
+        return error.message ?? 'Authentication failed. Please try again.';
     }
   }
 

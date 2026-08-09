@@ -53,14 +53,8 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          color: textPrimary,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: textSecondary,
-        ),
+        bodyLarge: TextStyle(fontSize: 16, color: textPrimary),
+        bodyMedium: TextStyle(fontSize: 14, color: textSecondary),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
@@ -74,48 +68,33 @@ class AppTheme {
 
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFE4E7EC),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE4E7EC)),
         ),
 
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFE4E7EC),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE4E7EC)),
         ),
 
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: primaryColor,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: primaryColor, width: 1.5),
         ),
 
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Colors.red,
-          ),
+          borderSide: const BorderSide(color: Colors.red),
         ),
 
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Colors.red,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          minimumSize: const Size(
-            double.infinity,
-            52,
-          ),
+          minimumSize: const Size(double.infinity, 52),
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           elevation: 0,
@@ -123,6 +102,25 @@ class AppTheme {
             borderRadius: BorderRadius.circular(14),
           ),
         ),
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.dark,
+        primary: const Color(0xFF7AB8FF),
+        secondary: const Color(0xFF48D6B5),
+      ),
+      scaffoldBackgroundColor: const Color(0xFF101828),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF101828),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
       ),
     );
   }

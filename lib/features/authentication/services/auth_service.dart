@@ -5,16 +5,10 @@ class AuthService {
   static const String _webClientId =
       '761218317880-tg9gr3ker575pjlfkcafvfo27g7ndp60.apps.googleusercontent.com';
 
-  AuthService({
-    FirebaseAuth? firebaseAuth,
-    GoogleSignIn? googleSignIn,
-  })  : _firebaseAuth =
-            firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn =
-            googleSignIn ??
-                GoogleSignIn(
-                  serverClientId: _webClientId,
-                );
+  AuthService({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
+    : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
+      _googleSignIn =
+          googleSignIn ?? GoogleSignIn(serverClientId: _webClientId);
 
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
@@ -50,17 +44,13 @@ class AuthService {
     required String password,
     String? displayName,
   }) async {
-    final credential =
-        await _firebaseAuth.createUserWithEmailAndPassword(
+    final credential = await _firebaseAuth.createUserWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
 
-    if (displayName != null &&
-        displayName.trim().isNotEmpty) {
-      await credential.user?.updateDisplayName(
-        displayName.trim(),
-      );
+    if (displayName != null && displayName.trim().isNotEmpty) {
+      await credential.user?.updateDisplayName(displayName.trim());
     }
 
     return credential;
@@ -71,8 +61,7 @@ class AuthService {
   // ------------------------------------------------------------
 
   Future<UserCredential?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser =
-        await _googleSignIn.signIn();
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
     if (googleUser == null) {
       return null;
@@ -86,21 +75,15 @@ class AuthService {
       idToken: googleAuth.idToken,
     );
 
-    return await _firebaseAuth.signInWithCredential(
-      credential,
-    );
+    return await _firebaseAuth.signInWithCredential(credential);
   }
 
   // ------------------------------------------------------------
   // FORGOT PASSWORD
   // ------------------------------------------------------------
 
-  Future<void> sendPasswordResetEmail({
-    required String email,
-  }) async {
-    await _firebaseAuth.sendPasswordResetEmail(
-      email: email.trim(),
-    );
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
   }
 
   // ------------------------------------------------------------
@@ -120,6 +103,48 @@ class AuthService {
     if (!user.emailVerified) {
       await user.sendEmailVerification();
     }
+  }
+
+  Future<void> updateProfile({String? displayName, String? photoUrl}) async {
+    final user = _firebaseAuth.currentUser;
+
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-user',
+        message: 'No authenticated user found.',
+      );
+    }
+
+    await user.updateDisplayName(displayName?.trim());
+    await user.updatePhotoURL(
+      photoUrl == null || photoUrl.trim().isEmpty ? null : photoUrl.trim(),
+    );
+  }
+
+  Future<void> updateEmail({required String email}) async {
+    final user = _firebaseAuth.currentUser;
+
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-user',
+        message: 'No authenticated user found.',
+      );
+    }
+
+    await user.verifyBeforeUpdateEmail(email.trim());
+  }
+
+  Future<void> updatePassword({required String password}) async {
+    final user = _firebaseAuth.currentUser;
+
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-user',
+        message: 'No authenticated user found.',
+      );
+    }
+
+    await user.updatePassword(password);
   }
 
   // ------------------------------------------------------------

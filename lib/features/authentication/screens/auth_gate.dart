@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../home/screens/home_screen.dart';
+// import '../../home/screens/home_screen.dart';
 import '../../onboarding/screens/onboarding_screen.dart';
 import '../../onboarding/services/onboarding_service.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
+import '../../../core/navigation/app_shell.dart';
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -96,9 +97,9 @@ class _AuthGateState extends State<AuthGate> {
     // Authenticated → Home
     // --------------------------------
 
-    if (authProvider.isAuthenticated) {
-      return const HomeScreen();
-    }
+ if (authProvider.isAuthenticated) {
+  return AppShell();
+}
 
     // --------------------------------
     // Not authenticated → Login
