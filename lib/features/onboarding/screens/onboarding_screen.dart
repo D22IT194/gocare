@@ -1,26 +1,42 @@
 import 'package:flutter/material.dart';
 
 import '../providers/onboarding_provider.dart';
+import '../services/onboarding_service.dart';
 import '../widgets/onboarding_indicator.dart';
 import '../widgets/onboarding_page.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({
+    super.key,
+    required this.onFinished,
+  });
+
+  final VoidCallback onFinished;
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  State<OnboardingScreen> createState() =>
+      _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _pageController = PageController();
+class _OnboardingScreenState
+    extends State<OnboardingScreen> {
+  final PageController _pageController =
+      PageController();
 
-  final OnboardingProvider _provider = const OnboardingProvider();
+  final OnboardingProvider _provider =
+      const OnboardingProvider();
+
+  final OnboardingService _onboardingService =
+      OnboardingService();
 
   int _currentIndex = 0;
 
+  bool _isFinishing = false;
+
   List get _pages => _provider.onboardingPages;
 
-  bool get _isLastPage => _currentIndex == _pages.length - 1;
+  bool get _isLastPage =>
+      _currentIndex == _pages.length - 1;
 
   @override
   void dispose() {
@@ -28,40 +44,50 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _nextPage() {
+  Future<void> _nextPage() async {
     if (_isLastPage) {
-      _finishOnboarding();
+      await _finishOnboarding();
       return;
     }
 
-    _pageController.nextPage(
+    await _pageController.nextPage(
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeInOut,
     );
   }
 
-  void _previousPage() {
+  Future<void> _previousPage() async {
     if (_currentIndex == 0) {
       return;
     }
 
-    _pageController.previousPage(
+    await _pageController.previousPage(
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeInOut,
     );
   }
 
-  void _skipOnboarding() {
-    _finishOnboarding();
+  Future<void> _skipOnboarding() async {
+    await _finishOnboarding();
   }
 
-  void _finishOnboarding() {
-    // Login screen will be connected in Phase 3.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Onboarding completed'),
-      ),
-    );
+  Future<void> _finishOnboarding() async {
+    if (_isFinishing) {
+      return;
+    }
+
+    setState(() {
+      _isFinishing = true;
+    });
+
+    await _onboardingService.complete();
+
+    if (!mounted) {
+      return;
+    }
+
+    // Tell AuthGate that onboarding is complete.
+    widget.onFinished();
   }
 
   @override
@@ -70,17 +96,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
+          // --------------------------------
           // Top bar
+          // --------------------------------
+
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                0,
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment:
+                    MainAxisAlignment.end,
                 children: [
                   if (!_isLastPage)
                     TextButton(
-                      onPressed: _skipOnboarding,
+                      onPressed:
+                          _isFinishing
+                              ? null
+                              : _skipOnboarding,
                       child: const Text(
                         'Skip',
                         style: TextStyle(
@@ -95,12 +133,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
+          // --------------------------------
           // Pages
+          // --------------------------------
+
           Expanded(
             child: PageView.builder(
               controller: _pageController,
               itemCount: _pages.length,
               onPageChanged: (index) {
+                if (!mounted) {
+                  return;
+                }
+
                 setState(() {
                   _currentIndex = index;
                 });
@@ -113,11 +158,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
+          // --------------------------------
           // Bottom controls
+          // --------------------------------
+
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              padding: const EdgeInsets.fromLTRB(
+                24,
+                12,
+                24,
+                24,
+              ),
               child: Column(
                 children: [
                   OnboardingIndicator(
@@ -132,22 +185,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       if (_currentIndex > 0)
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: _previousPage,
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(54),
-                              side: const BorderSide(
-                                color: Color(0xFF1976D2),
+                            onPressed:
+                                _isFinishing
+                                    ? null
+                                    : _previousPage,
+                            style:
+                                OutlinedButton.styleFrom(
+                              minimumSize:
+                                  const Size.fromHeight(
+                                54,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                              side:
+                                  const BorderSide(
+                                color:
+                                    Color(0xFF1976D2),
+                              ),
+                              shape:
+                                  RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(
+                                  14,
+                                ),
                               ),
                             ),
                             child: const Text(
                               'Back',
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF1976D2),
+                                fontWeight:
+                                    FontWeight.w600,
+                                color:
+                                    Color(0xFF1976D2),
                               ),
                             ),
                           ),
@@ -159,23 +227,50 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Expanded(
                         flex: 2,
                         child: ElevatedButton(
-                          onPressed: _nextPage,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(54),
-                            backgroundColor: const Color(0xFF1976D2),
-                            foregroundColor: Colors.white,
+                          onPressed:
+                              _isFinishing
+                                  ? null
+                                  : _nextPage,
+                          style:
+                              ElevatedButton.styleFrom(
+                            minimumSize:
+                                const Size.fromHeight(
+                              54,
+                            ),
+                            backgroundColor:
+                                const Color(0xFF1976D2),
+                            foregroundColor:
+                                Colors.white,
                             elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                            shape:
+                                RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(
+                                14,
+                              ),
                             ),
                           ),
-                          child: Text(
-                            _isLastPage ? 'Get Started' : 'Next',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          child: _isFinishing
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child:
+                                      CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  _isLastPage
+                                      ? 'Get Started'
+                                      : 'Next',
+                                  style:
+                                      const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight:
+                                        FontWeight.w700,
+                                  ),
+                                ),
                         ),
                       ),
                     ],

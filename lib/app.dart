@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
 
+import 'features/authentication/screens/forgot_password_screen.dart';
+import 'features/authentication/screens/login_screen.dart';
+import 'features/authentication/screens/register_screen.dart';
+
 class GoCareApp extends StatelessWidget {
-  const GoCareApp({super.key});
+  const GoCareApp({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,9 +21,21 @@ class GoCareApp extends StatelessWidget {
 
       theme: AppTheme.lightTheme,
 
-      initialRoute: AppRoutes.auth,
+      initialRoute: AppRoutes.login,
 
-      routes: AppRoutes.routes,
+      routes: {
+        AppRoutes.login: (context) {
+          return const LoginScreen();
+        },
+
+        AppRoutes.register: (context) {
+          return const RegisterScreen();
+        },
+
+        AppRoutes.forgotPassword: (context) {
+          return const ForgotPasswordScreen();
+        },
+      },
     );
   }
 }

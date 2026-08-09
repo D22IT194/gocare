@@ -5,16 +5,16 @@ class AuthService {
   static const String _webClientId =
       '761218317880-tg9gr3ker575pjlfkcafvfo27g7ndp60.apps.googleusercontent.com';
 
-
   AuthService({
     FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
-  })  : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              serverClientId: _webClientId,
-            );
-
+  })  : _firebaseAuth =
+            firebaseAuth ?? FirebaseAuth.instance,
+        _googleSignIn =
+            googleSignIn ??
+                GoogleSignIn(
+                  serverClientId: _webClientId,
+                );
 
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
@@ -27,15 +27,23 @@ class AuthService {
     return _firebaseAuth.currentUser;
   }
 
+  // ------------------------------------------------------------
+  // EMAIL LOGIN
+  // ------------------------------------------------------------
+
   Future<UserCredential> login({
     required String email,
     required String password,
   }) async {
-    return _firebaseAuth.signInWithEmailAndPassword(
+    return await _firebaseAuth.signInWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
   }
+
+  // ------------------------------------------------------------
+  // REGISTER
+  // ------------------------------------------------------------
 
   Future<UserCredential> register({
     required String email,
@@ -43,35 +51,49 @@ class AuthService {
     String? displayName,
   }) async {
     final credential =
-    await _firebaseAuth.createUserWithEmailAndPassword(
+        await _firebaseAuth.createUserWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
 
-    if (displayName != null && displayName.trim().isNotEmpty) {
-      await credential.user?.updateDisplayName(displayName.trim());
+    if (displayName != null &&
+        displayName.trim().isNotEmpty) {
+      await credential.user?.updateDisplayName(
+        displayName.trim(),
+      );
     }
 
     return credential;
   }
 
+  // ------------------------------------------------------------
+  // GOOGLE SIGN IN
+  // ------------------------------------------------------------
+
   Future<UserCredential?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    final GoogleSignInAccount? googleUser =
+        await _googleSignIn.signIn();
+
     if (googleUser == null) {
-      // User cancelled sign-in process
       return null;
     }
 
     final GoogleSignInAuthentication googleAuth =
         await googleUser.authentication;
 
-    final AuthCredential credential = GoogleAuthProvider.credential(
+    final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
 
-    return await _firebaseAuth.signInWithCredential(credential);
+    return await _firebaseAuth.signInWithCredential(
+      credential,
+    );
   }
+
+  // ------------------------------------------------------------
+  // FORGOT PASSWORD
+  // ------------------------------------------------------------
 
   Future<void> sendPasswordResetEmail({
     required String email,
@@ -80,6 +102,10 @@ class AuthService {
       email: email.trim(),
     );
   }
+
+  // ------------------------------------------------------------
+  // EMAIL VERIFICATION
+  // ------------------------------------------------------------
 
   Future<void> sendEmailVerification() async {
     final user = _firebaseAuth.currentUser;
@@ -96,16 +122,25 @@ class AuthService {
     }
   }
 
+  // ------------------------------------------------------------
+  // LOGOUT
+  // ------------------------------------------------------------
+
   Future<void> logout() async {
     try {
       await _googleSignIn.signOut();
     } catch (_) {
-      // Ignore google sign out errors if user signed in with email/pass
+      // Ignore Google logout errors.
     }
+
     await _firebaseAuth.signOut();
   }
+
+  // ------------------------------------------------------------
+  // REFRESH
+  // ------------------------------------------------------------
 
   Future<void> reloadUser() async {
     await _firebaseAuth.currentUser?.reload();
   }
-}
+}

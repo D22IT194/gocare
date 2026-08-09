@@ -31,59 +31,62 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    FocusScope.of(context).unfocus();
+  FocusScope.of(context).unfocus();
 
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+  if (!_formKey.currentState!.validate()) {
+    return;
+  }
 
-    final authProvider = context.read<AuthProvider>();
+  final authProvider = context.read<AuthProvider>();
 
-    final success = await authProvider.login(
-      email: _emailController.text,
-      password: _passwordController.text,
+  final success = await authProvider.login(
+    email: _emailController.text.trim(),
+    password: _passwordController.text,
+  );
+
+  if (!mounted) {
+    return;
+  }
+
+  if (!success &&
+      authProvider.errorMessage != null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          authProvider.errorMessage!,
+        ),
+      ),
     );
 
-    if (!mounted) {
-      return;
-    }
+    authProvider.clearError();
+  }
+}
 
-    if (!success && authProvider.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            authProvider.errorMessage!,
-          ),
-        ),
-      );
+Future<void> _googleSignIn() async {
+  FocusScope.of(context).unfocus();
 
-      authProvider.clearError();
-    }
+  final authProvider = context.read<AuthProvider>();
+
+  final success =
+      await authProvider.signInWithGoogle();
+
+  if (!mounted) {
+    return;
   }
 
-  Future<void> _googleSignIn() async {
-    FocusScope.of(context).unfocus();
-
-    final authProvider = context.read<AuthProvider>();
-
-    final success = await authProvider.signInWithGoogle();
-
-    if (!mounted) {
-      return;
-    }
-
-    if (!success && authProvider.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            authProvider.errorMessage!,
-          ),
+  if (!success &&
+      authProvider.errorMessage != null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          authProvider.errorMessage!,
         ),
-      );
+      ),
+    );
 
-      authProvider.clearError();
-    }
+    authProvider.clearError();
   }
+}
 
   @override
   Widget build(BuildContext context) {

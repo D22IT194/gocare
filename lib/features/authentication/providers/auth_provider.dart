@@ -37,22 +37,40 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isLoading => _status == AuthStatus.loading;
 
-  bool get isAuthenticated => _status == AuthStatus.authenticated;
+  bool get isAuthenticated =>
+      _status == AuthStatus.authenticated;
 
-  bool get isUnauthenticated => _status == AuthStatus.unauthenticated;
+  bool get isUnauthenticated =>
+      _status == AuthStatus.unauthenticated;
 
   Future<void> _initialize() async {
-    _authSubscription = _authService.authStateChanges.listen(
-      _handleAuthStateChanged,
-      onError: (Object error) {
-        _setError(
-          _firebaseErrorMessage(error),
-        );
-      },
-    );
+    try {
+      _authSubscription = _authService.authStateChanges.listen(
+        _handleAuthStateChanged,
+        onError: (Object error) {
+          debugPrint('Auth state error: $error');
+
+          _status = AuthStatus.unauthenticated;
+          _errorMessage = null;
+
+          notifyListeners();
+        },
+      );
+    } catch (error) {
+      debugPrint('Auth initialization error: $error');
+
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = null;
+
+      notifyListeners();
+    }
   }
 
   void _handleAuthStateChanged(User? firebaseUser) {
+    debugPrint(
+      'Auth state changed: ${firebaseUser?.email ?? 'SIGNED OUT'}',
+    );
+
     if (firebaseUser == null) {
       _user = null;
       _status = AuthStatus.unauthenticated;
@@ -62,6 +80,7 @@ class AuthProvider extends ChangeNotifier {
     }
 
     _errorMessage = null;
+
     notifyListeners();
   }
 
@@ -76,6 +95,10 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
+  // ------------------------------------------------------------
+  // LOGIN
+  // ------------------------------------------------------------
+
   Future<bool> login({
     required String email,
     required String password,
@@ -83,20 +106,56 @@ class AuthProvider extends ChangeNotifier {
     _setLoading();
 
     try {
+      debugPrint('LOGIN START: ${email.trim()}');
+
       await _authService.login(
         email: email,
         password: password,
       );
 
-      return true;
-    } on FirebaseAuthException catch (error) {
-      _setError(_firebaseErrorMessage(error));
+      debugPrint('LOGIN SUCCESS');
+
+      final firebaseUser = _authService.currentUser;
+
+      if (firebaseUser != null) {
+        _user = _mapFirebaseUser(firebaseUser);
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+
+        notifyListeners();
+
+        return true;
+      }
+
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = 'Login failed. Please try again.';
+
+      notifyListeners();
+
       return false;
-    } catch (_) {
-      _setError('Something went wrong. Please try again.');
+    } on FirebaseAuthException catch (error) {
+      debugPrint(
+        'LOGIN FIREBASE ERROR: ${error.code} - ${error.message}',
+      );
+
+      _setError(_firebaseErrorMessage(error));
+
+      return false;
+    } catch (error, stackTrace) {
+      debugPrint('LOGIN ERROR: $error');
+      debugPrint('$stackTrace');
+
+      _setError(
+        'Something went wrong. Please try again.',
+      );
+
       return false;
     }
   }
+
+  // ------------------------------------------------------------
+  // REGISTER
+  // ------------------------------------------------------------
 
   Future<bool> register({
     required String email,
@@ -106,50 +165,122 @@ class AuthProvider extends ChangeNotifier {
     _setLoading();
 
     try {
-      await _authService.register(
+      debugPrint('REGISTER START: ${email.trim()}');
+
+      final credential = await _authService.register(
         email: email,
         password: password,
         displayName: displayName,
       );
 
-      return true;
-    } on FirebaseAuthException catch (error) {
-      _setError(_firebaseErrorMessage(error));
+      final firebaseUser = credential.user;
+
+      if (firebaseUser != null) {
+        _user = _mapFirebaseUser(firebaseUser);
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+
+        notifyListeners();
+
+        return true;
+      }
+
+      _setError(
+        'Unable to create your account.',
+      );
+
       return false;
-    } catch (_) {
-      _setError('Something went wrong. Please try again.');
+    } on FirebaseAuthException catch (error) {
+      debugPrint(
+        'REGISTER FIREBASE ERROR: ${error.code} - ${error.message}',
+      );
+
+      _setError(_firebaseErrorMessage(error));
+
+      return false;
+    } catch (error, stackTrace) {
+      debugPrint('REGISTER ERROR: $error');
+      debugPrint('$stackTrace');
+
+      _setError(
+        'Something went wrong. Please try again.',
+      );
+
       return false;
     }
   }
+
+  // ------------------------------------------------------------
+  // GOOGLE SIGN IN
+  // ------------------------------------------------------------
 
   Future<bool> signInWithGoogle() async {
     _setLoading();
 
     try {
-      final credential = await _authService.signInWithGoogle();
+      debugPrint('GOOGLE SIGN-IN START');
+
+      final credential =
+          await _authService.signInWithGoogle();
 
       if (credential == null) {
-        // User cancelled Google sign-in
-        _status = _user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+        debugPrint('GOOGLE SIGN-IN CANCELLED');
+
+        _status = _user != null
+            ? AuthStatus.authenticated
+            : AuthStatus.unauthenticated;
+
         _errorMessage = null;
+
         notifyListeners();
+
         return false;
       }
 
-      return true;
-    } on FirebaseAuthException catch (error) {
-      _setError(_firebaseErrorMessage(error));
+      final firebaseUser = credential.user;
+
+      if (firebaseUser != null) {
+        _user = _mapFirebaseUser(firebaseUser);
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+
+        notifyListeners();
+
+        debugPrint('GOOGLE SIGN-IN SUCCESS');
+
+        return true;
+      }
+
+      _setError(
+        'Google sign-in failed. Please try again.',
+      );
+
       return false;
-    } catch (e, stack) {
-      debugPrint('Google Sign-In failed with error: $e\n$stack');
-      _setError('Google sign-in failed. Please ensure SHA-1 key fingerprint is added to Firebase Console.');
+    } on FirebaseAuthException catch (error) {
+      debugPrint(
+        'GOOGLE FIREBASE ERROR: ${error.code} - ${error.message}',
+      );
+
+      _setError(_firebaseErrorMessage(error));
+
+      return false;
+    } catch (error, stackTrace) {
+      debugPrint('GOOGLE SIGN-IN ERROR: $error');
+      debugPrint('$stackTrace');
+
+      _setError(
+        'Google sign-in failed. Please try again.',
+      );
+
       return false;
     }
   }
 
+  // ------------------------------------------------------------
+  // FORGOT PASSWORD
+  // ------------------------------------------------------------
 
   Future<bool> forgotPassword({
-
     required String email,
   }) async {
     _setLoading();
@@ -161,37 +292,80 @@ class AuthProvider extends ChangeNotifier {
 
       _status = AuthStatus.unauthenticated;
       _errorMessage = null;
+
       notifyListeners();
 
       return true;
     } on FirebaseAuthException catch (error) {
       _setError(_firebaseErrorMessage(error));
+
       return false;
-    } catch (_) {
-      _setError('Unable to send reset email. Please try again.');
+    } catch (error) {
+      debugPrint('FORGOT PASSWORD ERROR: $error');
+
+      _setError(
+        'Unable to send reset email. Please try again.',
+      );
+
       return false;
     }
   }
+
+  // ------------------------------------------------------------
+  // EMAIL VERIFICATION
+  // ------------------------------------------------------------
 
   Future<bool> sendEmailVerification() async {
     try {
       await _authService.sendEmailVerification();
+
       return true;
     } on FirebaseAuthException catch (error) {
       _setError(_firebaseErrorMessage(error));
+
+      return false;
+    } catch (error) {
+      debugPrint('EMAIL VERIFICATION ERROR: $error');
+
+      _setError(
+        'Unable to send verification email.',
+      );
+
       return false;
     }
   }
 
-  Future<void> logout() async {
+  // ------------------------------------------------------------
+  // LOGOUT
+  // ------------------------------------------------------------
+
+  Future<bool> logout() async {
     _setLoading();
 
     try {
       await _authService.logout();
-    } catch (_) {
-      _setError('Unable to logout. Please try again.');
+
+      _user = null;
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = null;
+
+      notifyListeners();
+
+      return true;
+    } catch (error) {
+      debugPrint('LOGOUT ERROR: $error');
+
+      _setError(
+        'Unable to logout. Please try again.',
+      );
+
+      return false;
     }
   }
+
+  // ------------------------------------------------------------
+  // REFRESH USER
+  // ------------------------------------------------------------
 
   Future<void> refreshUser() async {
     try {
@@ -201,34 +375,52 @@ class AuthProvider extends ChangeNotifier {
 
       if (firebaseUser != null) {
         _user = _mapFirebaseUser(firebaseUser);
+        _status = AuthStatus.authenticated;
+
         notifyListeners();
       }
-    } catch (_) {
-      // Keep the current state if refreshing fails.
+    } catch (error) {
+      debugPrint('REFRESH USER ERROR: $error');
     }
   }
+
+  // ------------------------------------------------------------
+  // CLEAR ERROR
+  // ------------------------------------------------------------
 
   void clearError() {
     _errorMessage = null;
 
     if (_status == AuthStatus.error) {
-      _status = AuthStatus.unauthenticated;
+      _status = _user != null
+          ? AuthStatus.authenticated
+          : AuthStatus.unauthenticated;
     }
 
     notifyListeners();
   }
 
+  // ------------------------------------------------------------
+  // INTERNAL STATE
+  // ------------------------------------------------------------
+
   void _setLoading() {
     _status = AuthStatus.loading;
     _errorMessage = null;
+
     notifyListeners();
   }
 
   void _setError(String message) {
     _status = AuthStatus.error;
     _errorMessage = message;
+
     notifyListeners();
   }
+
+  // ------------------------------------------------------------
+  // FIREBASE ERROR MESSAGES
+  // ------------------------------------------------------------
 
   String _firebaseErrorMessage(Object error) {
     if (error is! FirebaseAuthException) {
@@ -258,9 +450,6 @@ class AuthProvider extends ChangeNotifier {
       case 'account-exists-with-different-credential':
         return 'An account already exists with a different sign-in provider.';
 
-      case 'popup-closed-by-user':
-        return 'Sign-in popup was closed before completing sign in.';
-
       case 'operation-not-allowed':
         return 'This sign-in method is not enabled in Firebase.';
 
@@ -269,6 +458,9 @@ class AuthProvider extends ChangeNotifier {
 
       case 'network-request-failed':
         return 'Network error. Please check your internet connection.';
+
+      case 'requires-recent-login':
+        return 'Please login again to continue.';
 
       default:
         return error.message ??
