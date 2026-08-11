@@ -8,7 +8,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_logo.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({super.key, this.navigateAfterDelay = true});
+
+  final bool navigateAfterDelay;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -42,7 +44,9 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animationController.forward();
 
-    _timer = Timer(const Duration(milliseconds: 1800), _openAuthGate);
+    if (widget.navigateAfterDelay) {
+      _timer = Timer(const Duration(milliseconds: 1000), _openAuthGate);
+    }
   }
 
   void _openAuthGate() {

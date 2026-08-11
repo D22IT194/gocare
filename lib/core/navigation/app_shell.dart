@@ -7,40 +7,44 @@ import '../../features/nearby/screens/nearby_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({
-    super.key,
-  });
+  const AppShell({super.key});
 
   @override
-  State<AppShell> createState() =>
-      _AppShellState();
+  State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  late final List<Widget?> _screens = List<Widget?>.filled(5, null)
+    ..[0] = HomeScreen(onNavigateToTab: _onTabSelected);
 
   void _onTabSelected(int index) {
     setState(() {
+      _screens[index] ??= _buildScreen(index);
       _currentIndex = index;
     });
   }
 
+  Widget _buildScreen(int index) {
+    return switch (index) {
+      0 => HomeScreen(onNavigateToTab: _onTabSelected),
+      1 => const FirstAidScreen(),
+      2 => const EmergencyScreen(),
+      3 => const NearbyScreen(),
+      4 => const ProfileScreen(),
+      _ => const SizedBox.shrink(),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      HomeScreen(
-        onNavigateToTab: _onTabSelected,
-      ),
-      const FirstAidScreen(),
-      const EmergencyScreen(),
-      const NearbyScreen(),
-      const ProfileScreen(),
-    ];
-
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: screens,
+        children: List.generate(
+          _screens.length,
+          (index) => _screens[index] ?? const SizedBox.shrink(),
+        ),
       ),
 
       bottomNavigationBar: NavigationBar(
@@ -55,42 +59,26 @@ class _AppShellState extends State<AppShell> {
           ),
 
           NavigationDestination(
-            icon: Icon(
-              Icons.medical_services_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.medical_services,
-            ),
+            icon: Icon(Icons.medical_services_outlined),
+            selectedIcon: Icon(Icons.medical_services),
             label: 'First Aid',
           ),
 
           NavigationDestination(
-            icon: Icon(
-              Icons.emergency_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.emergency,
-            ),
+            icon: Icon(Icons.emergency_outlined),
+            selectedIcon: Icon(Icons.emergency),
             label: 'Emergency',
           ),
 
           NavigationDestination(
-            icon: Icon(
-              Icons.location_on_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.location_on,
-            ),
+            icon: Icon(Icons.location_on_outlined),
+            selectedIcon: Icon(Icons.location_on),
             label: 'Nearby',
           ),
 
           NavigationDestination(
-            icon: Icon(
-              Icons.person_outline,
-            ),
-            selectedIcon: Icon(
-              Icons.person,
-            ),
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],

@@ -12,6 +12,7 @@ class ProfileHeader extends StatelessWidget {
     this.imageProvider,
     this.phoneNumber,
     this.onEdit,
+    this.onPhotoTap,
   });
 
   final String name;
@@ -20,6 +21,7 @@ class ProfileHeader extends StatelessWidget {
   final ImageProvider? imageProvider;
   final String? phoneNumber;
   final VoidCallback? onEdit;
+  final VoidCallback? onPhotoTap;
 
   @override
   Widget build(BuildContext context) {
@@ -43,21 +45,46 @@ class ProfileHeader extends StatelessWidget {
           Stack(
             alignment: Alignment.bottomRight,
             children: [
-              CircleAvatar(
-                radius: 42,
-                backgroundColor: Colors.white,
-                backgroundImage: resolvedImageProvider,
-                child:
-                    resolvedImageProvider == null
-                    ? Text(
-                        firstLetter,
-                        style: const TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1976D2),
+              GestureDetector(
+                onTap: onPhotoTap,
+                child: Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    CircleAvatar(
+                      radius: 42,
+                      backgroundColor: Colors.white,
+                      backgroundImage: resolvedImageProvider,
+                      child: resolvedImageProvider == null
+                          ? Text(
+                              firstLetter,
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1976D2),
+                              ),
+                            )
+                          : null,
+                    ),
+
+                    if (onEdit != null)
+                      Material(
+                        color: const Color(0xFF1976D2),
+                        borderRadius: BorderRadius.circular(18),
+                        child: InkWell(
+                          onTap: onEdit,
+                          borderRadius: BorderRadius.circular(18),
+                          child: const Padding(
+                            padding: EdgeInsets.all(7),
+                            child: Icon(
+                              Icons.edit_outlined,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
                         ),
-                      )
-                    : null,
+                      ),
+                  ],
+                ),
               ),
               if (onEdit != null)
                 Material(

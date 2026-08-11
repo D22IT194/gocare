@@ -57,22 +57,29 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void _handleAuthStateChanged(User? firebaseUser) {
-    debugPrint('Auth state changed: ${firebaseUser?.email ?? 'SIGNED OUT'}');
+void _handleAuthStateChanged(User? firebaseUser) {
+  debugPrint(
+    'AUTH STATE CHANGED: '
+    '${firebaseUser?.email ?? 'SIGNED OUT'}',
+  );
 
-    if (firebaseUser == null) {
-      _user = null;
+  if (firebaseUser == null) {
+    _user = null;
+
+    // IMPORTANT:
+    // If a login attempt failed, preserve the error.
+    if (_status != AuthStatus.error) {
       _status = AuthStatus.unauthenticated;
-    } else {
-      _user = _mapFirebaseUser(firebaseUser);
-      _status = AuthStatus.authenticated;
+      _errorMessage = null;
     }
-
+  } else {
+    _user = _mapFirebaseUser(firebaseUser);
+    _status = AuthStatus.authenticated;
     _errorMessage = null;
-
-    notifyListeners();
   }
 
+  notifyListeners();
+}
   AppUser _mapFirebaseUser(User user) {
     return AppUser.fromFirebaseUser(
       uid: user.uid,
@@ -88,21 +95,28 @@ class AuthProvider extends ChangeNotifier {
   // LOGIN
   // ------------------------------------------------------------
 
+  // ------------------------------------------------------------
+  // LOGIN
+  // ------------------------------------------------------------
+
   Future<bool> login({required String email, required String password}) async {
     _setLoading();
 
     try {
       debugPrint('LOGIN START: ${email.trim()}');
 
-      await _authService.login(email: email, password: password);
+      await _authService.login(email: email.trim(), password: password);
 
       debugPrint('LOGIN SUCCESS');
 
       final firebaseUser = _authService.currentUser;
 
       if (firebaseUser != null) {
+        // Firebase User → AppUser
         _user = _mapFirebaseUser(firebaseUser);
+
         _status = AuthStatus.authenticated;
+
         _errorMessage = null;
 
         notifyListeners();
@@ -111,19 +125,24 @@ class AuthProvider extends ChangeNotifier {
       }
 
       _status = AuthStatus.unauthenticated;
+
       _errorMessage = 'Login failed. Please try again.';
 
       notifyListeners();
 
       return false;
     } on FirebaseAuthException catch (error) {
-      debugPrint('LOGIN FIREBASE ERROR: ${error.code} - ${error.message}');
+      debugPrint(
+        'LOGIN FIREBASE ERROR: '
+        '${error.code} - ${error.message}',
+      );
 
       _setError(_firebaseErrorMessage(error));
 
       return false;
     } catch (error, stackTrace) {
       debugPrint('LOGIN ERROR: $error');
+
       debugPrint('$stackTrace');
 
       _setError('Something went wrong. Please try again.');
@@ -131,7 +150,6 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-
   // ------------------------------------------------------------
   // REGISTER
   // ------------------------------------------------------------
@@ -147,28 +165,45 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('REGISTER START: ${email.trim()}');
 
       final credential = await _authService.register(
-        email: email,
+        email: email.trim(),
         password: password,
-        displayName: displayName,
+        displayName: displayName?.trim(),
       );
 
-      final firebaseUser = credential.user;
+      var firebaseUser = credential.user;
 
-      if (firebaseUser != null) {
-        _user = _mapFirebaseUser(firebaseUser);
-        _status = AuthStatus.authenticated;
-        _errorMessage = null;
-
-        notifyListeners();
-
-        return true;
+      if (firebaseUser == null) {
+        _setError('Unable to create your account.');
+        return false;
       }
 
-      _setError('Unable to create your account.');
+      // IMPORTANT:
+      // Firebase may not immediately expose the updated
+      // displayName on the returned User object.
+      await firebaseUser.reload();
 
-      return false;
+      firebaseUser = _authService.currentUser;
+
+      if (firebaseUser == null) {
+        _setError('Unable to load your account information.');
+        return false;
+      }
+
+      debugPrint('REGISTER USER NAME: ${firebaseUser.displayName}');
+
+      _user = _mapFirebaseUser(firebaseUser);
+
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+
+      notifyListeners();
+
+      return true;
     } on FirebaseAuthException catch (error) {
-      debugPrint('REGISTER FIREBASE ERROR: ${error.code} - ${error.message}');
+      debugPrint(
+        'REGISTER FIREBASE ERROR: '
+        '${error.code} - ${error.message}',
+      );
 
       _setError(_firebaseErrorMessage(error));
 
@@ -182,7 +217,6 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-
   // ------------------------------------------------------------
   // GOOGLE SIGN IN
   // ------------------------------------------------------------
@@ -295,9 +329,9 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> updateProfile({
     required String displayName,
-    required String photoUrl,
     required String email,
-    String? phoneNumber,
+    required String photoUrl,
+    required String phoneNumber,
   }) async {
     _setLoading();
 
@@ -307,14 +341,22 @@ class AuthProvider extends ChangeNotifier {
         photoUrl: photoUrl,
       );
 
-      if (_user != null && email.trim() != _user!.email) {
-        await _authService.updateEmail(email: email);
+      if (email.trim().isNotEmpty && email.trim() != _user?.email) {
+        await _authService.updateEmail(email: email.trim());
       }
 
-      await refreshUser();
-      _user = _user?.copyWith(phoneNumber: phoneNumber);
+      await _authService.reloadUser();
+
+      final firebaseUser = _authService.currentUser;
+
+      if (firebaseUser != null) {
+        _user = _mapFirebaseUser(firebaseUser);
+      }
+
       _status = AuthStatus.authenticated;
+
       _errorMessage = null;
+
       notifyListeners();
 
       return true;
@@ -323,31 +365,54 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } catch (error) {
-      debugPrint('UPDATE PROFILE ERROR: $error');
-
-      _setError('Unable to update profile. Please try again.');
+      _setError('Unable to update profile.');
 
       return false;
     }
   }
 
-  Future<bool> updatePassword({required String password}) async {
+  // ------------------------------------------------------------
+  // CHANGE PASSWORD
+  // ------------------------------------------------------------
+
+  Future<bool> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
     _setLoading();
 
     try {
-      await _authService.updatePassword(password: password);
+      // ----------------------------------------------------------
+      // STEP 1: RE-AUTHENTICATE CURRENT USER
+      // ----------------------------------------------------------
+
+      await _authService.reauthenticateWithPassword(password: currentPassword);
+
+      // ----------------------------------------------------------
+      // STEP 2: UPDATE PASSWORD
+      // ----------------------------------------------------------
+
+      await _authService.updatePassword(password: newPassword);
 
       _status = AuthStatus.authenticated;
       _errorMessage = null;
+
       notifyListeners();
 
       return true;
     } on FirebaseAuthException catch (error) {
+      debugPrint(
+        'UPDATE PASSWORD FIREBASE ERROR: '
+        '${error.code} - ${error.message}',
+      );
+
       _setError(_firebaseErrorMessage(error));
 
       return false;
-    } catch (error) {
+    } catch (error, stackTrace) {
       debugPrint('UPDATE PASSWORD ERROR: $error');
+
+      debugPrint('$stackTrace');
 
       _setError('Unable to change password. Please try again.');
 
@@ -456,8 +521,10 @@ class AuthProvider extends ChangeNotifier {
         return 'No account found with this email.';
 
       case 'wrong-password':
+        return 'Wrong password. Please try again.';
+
       case 'invalid-credential':
-        return 'Invalid email or password.';
+        return 'Wrong password. Please try again.';
 
       case 'email-already-in-use':
         return 'An account already exists with this email.';
