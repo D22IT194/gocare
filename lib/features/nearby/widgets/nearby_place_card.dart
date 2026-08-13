@@ -17,6 +17,7 @@ class NearbyPlaceCard extends StatefulWidget {
   });
 
   final NearbyPlace place;
+  // final VoidCallback? onFavorite;
 
   /// Called with the place when the user taps the favorite/bookmark icon.
   /// Update your data source here (e.g. toggle in a list, write to storage).
@@ -71,7 +72,10 @@ class _NearbyPlaceCardState extends State<NearbyPlaceCard>
     }
 
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched) debugPrint('Could not launch Google Maps.');
     } catch (e) {
       debugPrint('Error opening Google Maps: $e');
@@ -88,9 +92,11 @@ class _NearbyPlaceCardState extends State<NearbyPlaceCard>
 
   void _handleFavoriteTap() {
     _favController.forward(from: 0.85);
-    widget.onFavoriteToggle?.call(
-      widget.place.copyWith(isFavorite: !widget.place.isFavorite),
-    );
+
+    // Send the CURRENT place.
+    // NearbyProvider is responsible for toggling
+    // the favorite state.
+    widget.onFavoriteToggle?.call(widget.place);
   }
 
   IconData _categoryIcon(String category) {
@@ -204,7 +210,9 @@ class _NearbyPlaceCardState extends State<NearbyPlaceCard>
                       splashRadius: 20,
                       visualDensity: VisualDensity.compact,
                       icon: Icon(
-                        place.isFavorite ? Icons.bookmark : Icons.bookmark_border,
+                        place.isFavorite
+                            ? Icons.bookmark
+                            : Icons.bookmark_border,
                         color: place.isFavorite ? _red : _muted,
                       ),
                     ),
@@ -233,50 +241,65 @@ class _NearbyPlaceCardState extends State<NearbyPlaceCard>
                       background: _blueBg,
                     ),
                   _InfoChip(
-                    icon: place.isOpen
+                    icon: place.isOpen == true
                         ? Icons.access_time_filled_rounded
                         : Icons.access_time_rounded,
+
                     label: place.hoursText,
-                    color: place.isOpen ? _green : _amber,
-                    background: place.isOpen ? _greenBg : _amberBg,
+
+                    color: place.isOpen == true
+                        ? _green
+                        : place.isOpen == false
+                        ? _amber
+                        : _muted,
+
+                    background: place.isOpen == true
+                        ? _greenBg
+                        : place.isOpen == false
+                        ? _amberBg
+                        : const Color(0xFFF2F4F7),
                   ),
                 ],
               ),
 
               const SizedBox(height: 14),
 
-              // ---- Actions: directions, call ----
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: TextButton.icon(
                       onPressed: _openMaps,
-                      icon: const Icon(Icons.directions_outlined, size: 18),
-                      label: const Text('Directions'),
-                      style: OutlinedButton.styleFrom(
+                      icon: const Icon(Icons.directions_outlined, size: 20),
+                      label: const Text(
+                        'Directions',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      style: TextButton.styleFrom(
                         foregroundColor: _blue,
-                        side: const BorderSide(color: _blue),
+                        backgroundColor: _blue.withOpacity(0.08),
+                        minimumSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
                   ),
                   if (place.phoneNumber != null) ...[
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     SizedBox(
                       width: 52,
                       height: 48,
-                      child: OutlinedButton(
+                      child: TextButton(
                         onPressed: _call,
-                        style: OutlinedButton.styleFrom(
+                        style: TextButton.styleFrom(
                           foregroundColor: _green,
-                          side: const BorderSide(color: _green),
+                          backgroundColor: _green.withOpacity(0.08),
+                          padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Icon(Icons.call_outlined),
+                        child: const Icon(Icons.call_outlined, size: 20),
                       ),
                     ),
                   ],

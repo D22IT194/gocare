@@ -31,6 +31,61 @@ class LocationService {
       throw const LocationPermissionPermanentlyDeniedException();
     }
 
+    // ----------------------------------------------------------
+    // TRY LAST KNOWN LOCATION FIRST
+    // ----------------------------------------------------------
+
+    final lastKnownPosition =
+        await Geolocator.getLastKnownPosition();
+
+    if (lastKnownPosition != null) {
+      // Return cached location immediately.
+      //
+      // This prevents the UI from waiting several seconds for
+      // the GPS to acquire a fresh location.
+      return lastKnownPosition;
+    }
+
+    // ----------------------------------------------------------
+    // GET FRESH LOCATION
+    // ----------------------------------------------------------
+
+    return Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.medium,
+        distanceFilter: 10,
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // GET FRESH HIGH ACCURACY LOCATION
+  // ------------------------------------------------------------
+
+  Future<Position> getFreshLocation() async {
+    final serviceEnabled =
+        await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      throw const LocationServiceDisabledException();
+    }
+
+    LocationPermission permission =
+        await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission =
+          await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        throw const LocationPermissionDeniedException();
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw const LocationPermissionPermanentlyDeniedException();
+    }
+
     return Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
