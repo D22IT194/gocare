@@ -10,10 +10,8 @@ class EmergencyProvider extends ChangeNotifier {
   EmergencyProvider({
     EmergencyService? emergencyService,
     FirebaseAuth? firebaseAuth,
-  })  : _emergencyService =
-            emergencyService ?? EmergencyService(),
-        _firebaseAuth =
-            firebaseAuth ?? FirebaseAuth.instance {
+  }) : _emergencyService = emergencyService ?? EmergencyService(),
+       _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance {
     _listenToAuthChanges();
   }
 
@@ -35,8 +33,7 @@ class EmergencyProvider extends ChangeNotifier {
   // GETTERS
   // ============================================================
 
-  List<EmergencyContact> get contacts =>
-      List.unmodifiable(_contacts);
+  List<EmergencyContact> get contacts => List.unmodifiable(_contacts);
 
   bool get isLoading => _isLoading;
 
@@ -48,13 +45,9 @@ class EmergencyProvider extends ChangeNotifier {
   // CONTACTS BY TYPE
   // ============================================================
 
-  List<EmergencyContact> contactsByType(
-    EmergencyContactType type,
-  ) {
+  List<EmergencyContact> contactsByType(EmergencyContactType type) {
     return _contacts
-        .where(
-          (contact) => contact.type == type,
-        )
+        .where((contact) => contact.type == type)
         .toList(growable: false);
   }
 
@@ -64,9 +57,7 @@ class EmergencyProvider extends ChangeNotifier {
 
   EmergencyContact? get primaryContact {
     try {
-      return _contacts.firstWhere(
-        (contact) => contact.isPrimary,
-      );
+      return _contacts.firstWhere((contact) => contact.isPrimary);
     } catch (_) {
       return null;
     }
@@ -77,63 +68,52 @@ class EmergencyProvider extends ChangeNotifier {
   // ============================================================
 
   void _listenToAuthChanges() {
-    _authSubscription =
-        _firebaseAuth.authStateChanges().listen(
-      (User? user) async {
-        debugPrint(
-          'EmergencyProvider: Auth state changed',
-        );
+    _authSubscription = _firebaseAuth.authStateChanges().listen((
+      User? user,
+    ) async {
+      debugPrint('EmergencyProvider: Auth state changed');
 
-        if (user == null) {
-          // ======================================================
-          // USER LOGGED OUT
-          // ======================================================
+      if (user == null) {
+        // ======================================================
+        // USER LOGGED OUT
+        // ======================================================
 
-          debugPrint(
-            'EmergencyProvider: User logged out.',
-          );
+        debugPrint('EmergencyProvider: User logged out.');
 
-          _userId = null;
+        _userId = null;
 
-          _contacts.clear();
+        _contacts.clear();
 
-          _isLoading = false;
+        _isLoading = false;
 
-          _errorMessage = null;
+        _errorMessage = null;
 
-          notifyListeners();
+        notifyListeners();
 
-          return;
-        }
+        return;
+      }
 
-        // ========================================================
-        // USER LOGGED IN
-        // ========================================================
+      // ========================================================
+      // USER LOGGED IN
+      // ========================================================
 
-        debugPrint(
-          'EmergencyProvider: '
-          'User logged in: ${user.uid}',
-        );
+      debugPrint(
+        'EmergencyProvider: '
+        'User logged in: ${user.uid}',
+      );
 
-        await initialize(
-          userId: user.uid,
-        );
-      },
-    );
+      await initialize(userId: user.uid);
+    });
   }
 
   // ============================================================
   // INITIALIZE / LOAD CONTACTS
   // ============================================================
 
-  Future<void> initialize({
-    required String userId,
-  }) async {
+  Future<void> initialize({required String userId}) async {
     // Prevent unnecessary reload for same user
     // if contacts are already loaded.
-    if (_userId == userId &&
-        !_isLoading &&
-        _contacts.isNotEmpty) {
+    if (_userId == userId && !_isLoading && _contacts.isNotEmpty) {
       debugPrint(
         'EmergencyProvider: '
         'Contacts already loaded for $userId',
@@ -156,8 +136,7 @@ class EmergencyProvider extends ChangeNotifier {
         'Loading contacts from Firestore...',
       );
 
-      final loadedContacts =
-          await _emergencyService.getContacts(
+      final loadedContacts = await _emergencyService.getContacts(
         userId: userId,
       );
 
@@ -173,16 +152,11 @@ class EmergencyProvider extends ChangeNotifier {
         '${loadedContacts.length} contacts loaded.',
       );
     } catch (e, stackTrace) {
-      debugPrint(
-        'EmergencyProvider load error: $e',
-      );
+      debugPrint('EmergencyProvider load error: $e');
 
-      debugPrint(
-        '$stackTrace',
-      );
+      debugPrint('$stackTrace');
 
-      _errorMessage =
-          'Unable to load emergency contacts.';
+      _errorMessage = 'Unable to load emergency contacts.';
 
       _contacts.clear();
     } finally {
@@ -199,8 +173,7 @@ class EmergencyProvider extends ChangeNotifier {
   Future<bool> addContact({
     required String name,
     required String phone,
-    EmergencyContactType type =
-        EmergencyContactType.personal,
+    EmergencyContactType type = EmergencyContactType.personal,
     String? relationship,
     String? email,
     String? speciality,
@@ -210,8 +183,7 @@ class EmergencyProvider extends ChangeNotifier {
     final userId = _userId;
 
     if (userId == null) {
-      _errorMessage =
-          'User is not logged in.';
+      _errorMessage = 'User is not logged in.';
 
       notifyListeners();
 
@@ -222,9 +194,7 @@ class EmergencyProvider extends ChangeNotifier {
       _errorMessage = null;
 
       final contact = EmergencyContact(
-        id: DateTime.now()
-            .microsecondsSinceEpoch
-            .toString(),
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
 
         name: name.trim(),
 
@@ -232,21 +202,13 @@ class EmergencyProvider extends ChangeNotifier {
 
         type: type,
 
-        relationship: _clean(
-          relationship,
-        ),
+        relationship: _clean(relationship),
 
-        email: _clean(
-          email,
-        ),
+        email: _clean(email),
 
-        speciality: _clean(
-          speciality,
-        ),
+        speciality: _clean(speciality),
 
-        address: _clean(
-          address,
-        ),
+        address: _clean(address),
 
         isPrimary: isPrimary,
       );
@@ -256,14 +218,9 @@ class EmergencyProvider extends ChangeNotifier {
       // ========================================================
 
       if (isPrimary) {
-        for (var i = 0;
-            i < _contacts.length;
-            i++) {
-          if (_contacts[i].isPrimary) {
-            _contacts[i] =
-                _contacts[i].copyWith(
-              isPrimary: false,
-            );
+        for (var i = 0; i < _contacts.length; i++) {
+          if (_contacts[i].type == type && _contacts[i].isPrimary) {
+            _contacts[i] = _contacts[i].copyWith(isPrimary: false);
           }
         }
       }
@@ -272,10 +229,7 @@ class EmergencyProvider extends ChangeNotifier {
       // FIRESTORE
       // ========================================================
 
-      await _emergencyService.addContact(
-        userId: userId,
-        contact: contact,
-      );
+      await _emergencyService.addContact(userId: userId, contact: contact);
 
       // ========================================================
       // LOCAL STATE
@@ -287,16 +241,11 @@ class EmergencyProvider extends ChangeNotifier {
 
       return true;
     } catch (e, stackTrace) {
-      debugPrint(
-        'EmergencyProvider add error: $e',
-      );
+      debugPrint('EmergencyProvider add error: $e');
 
-      debugPrint(
-        '$stackTrace',
-      );
+      debugPrint('$stackTrace');
 
-      _errorMessage =
-          'Unable to save emergency contact.';
+      _errorMessage = 'Unable to save emergency contact.';
 
       notifyListeners();
 
@@ -312,8 +261,7 @@ class EmergencyProvider extends ChangeNotifier {
     required String id,
     required String name,
     required String phone,
-    EmergencyContactType type =
-        EmergencyContactType.personal,
+    EmergencyContactType type = EmergencyContactType.personal,
     String? relationship,
     String? email,
     String? speciality,
@@ -323,18 +271,14 @@ class EmergencyProvider extends ChangeNotifier {
     final userId = _userId;
 
     if (userId == null) {
-      _errorMessage =
-          'User is not logged in.';
+      _errorMessage = 'User is not logged in.';
 
       notifyListeners();
 
       return false;
     }
 
-    final index =
-        _contacts.indexWhere(
-      (contact) => contact.id == id,
-    );
+    final index = _contacts.indexWhere((contact) => contact.id == id);
 
     if (index == -1) {
       return false;
@@ -348,14 +292,11 @@ class EmergencyProvider extends ChangeNotifier {
       // ========================================================
 
       if (isPrimary) {
-        for (var i = 0;
-            i < _contacts.length;
-            i++) {
-          if (_contacts[i].isPrimary) {
-            _contacts[i] =
-                _contacts[i].copyWith(
-              isPrimary: false,
-            );
+        for (var i = 0; i < _contacts.length; i++) {
+          if (_contacts[i].id != id &&
+              _contacts[i].type == type &&
+              _contacts[i].isPrimary) {
+            _contacts[i] = _contacts[i].copyWith(isPrimary: false);
           }
         }
       }
@@ -373,21 +314,13 @@ class EmergencyProvider extends ChangeNotifier {
 
         type: type,
 
-        relationship: _clean(
-          relationship,
-        ),
+        relationship: _clean(relationship),
 
-        email: _clean(
-          email,
-        ),
+        email: _clean(email),
 
-        speciality: _clean(
-          speciality,
-        ),
+        speciality: _clean(speciality),
 
-        address: _clean(
-          address,
-        ),
+        address: _clean(address),
 
         isPrimary: isPrimary,
       );
@@ -396,10 +329,7 @@ class EmergencyProvider extends ChangeNotifier {
       // FIRESTORE
       // ========================================================
 
-      await _emergencyService.updateContact(
-        userId: userId,
-        contact: contact,
-      );
+      await _emergencyService.updateContact(userId: userId, contact: contact);
 
       // ========================================================
       // LOCAL STATE
@@ -411,16 +341,11 @@ class EmergencyProvider extends ChangeNotifier {
 
       return true;
     } catch (e, stackTrace) {
-      debugPrint(
-        'EmergencyProvider update error: $e',
-      );
+      debugPrint('EmergencyProvider update error: $e');
 
-      debugPrint(
-        '$stackTrace',
-      );
+      debugPrint('$stackTrace');
 
-      _errorMessage =
-          'Unable to update emergency contact.';
+      _errorMessage = 'Unable to update emergency contact.';
 
       notifyListeners();
 
@@ -432,14 +357,11 @@ class EmergencyProvider extends ChangeNotifier {
   // DELETE CONTACT
   // ============================================================
 
-  Future<bool> deleteContact(
-    String id,
-  ) async {
+  Future<bool> deleteContact(String id) async {
     final userId = _userId;
 
     if (userId == null) {
-      _errorMessage =
-          'User is not logged in.';
+      _errorMessage = 'User is not logged in.';
 
       notifyListeners();
 
@@ -449,29 +371,19 @@ class EmergencyProvider extends ChangeNotifier {
     try {
       _errorMessage = null;
 
-      await _emergencyService.deleteContact(
-        userId: userId,
-        contactId: id,
-      );
+      await _emergencyService.deleteContact(userId: userId, contactId: id);
 
-      _contacts.removeWhere(
-        (contact) => contact.id == id,
-      );
+      _contacts.removeWhere((contact) => contact.id == id);
 
       notifyListeners();
 
       return true;
     } catch (e, stackTrace) {
-      debugPrint(
-        'EmergencyProvider delete error: $e',
-      );
+      debugPrint('EmergencyProvider delete error: $e');
 
-      debugPrint(
-        '$stackTrace',
-      );
+      debugPrint('$stackTrace');
 
-      _errorMessage =
-          'Unable to delete emergency contact.';
+      _errorMessage = 'Unable to delete emergency contact.';
 
       notifyListeners();
 
@@ -483,50 +395,62 @@ class EmergencyProvider extends ChangeNotifier {
   // SET PRIMARY
   // ============================================================
 
-  Future<bool> setPrimaryContact(
-    String id,
-  ) async {
+  Future<bool> setPrimaryContact(String id) async {
     final userId = _userId;
 
     if (userId == null) {
-      _errorMessage =
-          'User is not logged in.';
-
+      _errorMessage = 'User is not logged in.';
       notifyListeners();
-
       return false;
     }
 
     try {
-      await _emergencyService.setPrimaryContact(
-        userId: userId,
-        contactId: id,
+      _errorMessage = null;
+
+      // Find the contact being made primary.
+      final selectedContact = _contacts.firstWhere(
+        (contact) => contact.id == id,
       );
 
-      for (var i = 0;
-          i < _contacts.length;
-          i++) {
-        _contacts[i] =
-            _contacts[i].copyWith(
-          isPrimary:
-              _contacts[i].id == id,
-        );
+      // Firestore handles removing primary only
+      // from contacts of the SAME type.
+      await _emergencyService.setPrimaryContact(userId: userId, contactId: id);
+
+      // ----------------------------------------------------------
+      // UPDATE LOCAL STATE
+      // ----------------------------------------------------------
+      //
+      // IMPORTANT:
+      // Only contacts of the SAME TYPE are affected.
+      //
+      // Personal primary:
+      //   Father = true
+      //   Mother = false
+      //
+      // Doctor primary:
+      //   Dr. Patel = true
+      //   Dr. Shah = false
+      //
+      // Father remains true when Dr. Patel becomes primary.
+      // ----------------------------------------------------------
+
+      for (var i = 0; i < _contacts.length; i++) {
+        final contact = _contacts[i];
+
+        if (contact.type == selectedContact.type) {
+          _contacts[i] = contact.copyWith(isPrimary: contact.id == id);
+        }
       }
 
       notifyListeners();
 
       return true;
     } catch (e, stackTrace) {
-      debugPrint(
-        'EmergencyProvider primary error: $e',
-      );
+      debugPrint('EmergencyProvider primary error: $e');
 
-      debugPrint(
-        '$stackTrace',
-      );
+      debugPrint('$stackTrace');
 
-      _errorMessage =
-          'Unable to set primary contact.';
+      _errorMessage = 'Unable to set primary contact.';
 
       notifyListeners();
 
@@ -566,8 +490,7 @@ class EmergencyProvider extends ChangeNotifier {
     final userId = _userId;
 
     if (userId == null) {
-      _errorMessage =
-          'User is not logged in.';
+      _errorMessage = 'User is not logged in.';
 
       notifyListeners();
 
@@ -575,10 +498,7 @@ class EmergencyProvider extends ChangeNotifier {
     }
 
     try {
-      await _emergencyService
-          .deleteAllContacts(
-        userId: userId,
-      );
+      await _emergencyService.deleteAllContacts(userId: userId);
 
       _contacts.clear();
 
@@ -586,16 +506,11 @@ class EmergencyProvider extends ChangeNotifier {
 
       return true;
     } catch (e, stackTrace) {
-      debugPrint(
-        'EmergencyProvider clear error: $e',
-      );
+      debugPrint('EmergencyProvider clear error: $e');
 
-      debugPrint(
-        '$stackTrace',
-      );
+      debugPrint('$stackTrace');
 
-      _errorMessage =
-          'Unable to remove emergency contacts.';
+      _errorMessage = 'Unable to remove emergency contacts.';
 
       notifyListeners();
 
@@ -617,15 +532,10 @@ class EmergencyProvider extends ChangeNotifier {
   // CLEAN STRING
   // ============================================================
 
-  static String? _clean(
-    String? value,
-  ) {
-    final text =
-        value?.trim() ?? '';
+  static String? _clean(String? value) {
+    final text = value?.trim() ?? '';
 
-    return text.isEmpty
-        ? null
-        : text;
+    return text.isEmpty ? null : text;
   }
 
   // ============================================================

@@ -14,6 +14,414 @@ class EmergencyContactsScreen extends StatefulWidget {
       _EmergencyContactsScreenState();
 }
 
+class _PrimaryEmergencyContactCard extends StatelessWidget {
+  const _PrimaryEmergencyContactCard({
+    required this.contact,
+    required this.onCall,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final EmergencyContact contact;
+  final VoidCallback onCall;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDoctor = contact.type == EmergencyContactType.doctor;
+
+    final primaryColor = isDoctor
+        ? const Color(0xFF00A896)
+        : const Color(0xFF1976D2);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.35),
+          width: 1.4,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ============================================================
+          // HEADER
+          // ============================================================
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(17),
+                ),
+                child: Icon(
+                  isDoctor
+                      ? Icons.local_hospital_outlined
+                      : Icons.person_outline,
+                  color: primaryColor,
+                  size: 28,
+                ),
+              ),
+
+              const SizedBox(width: 14),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      contact.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF172B4D),
+                      ),
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    if (isDoctor &&
+                        contact.speciality != null &&
+                        contact.speciality!.trim().isNotEmpty)
+                      Text(
+                        contact.speciality!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF667085),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      )
+                    else if (!isDoctor &&
+                        contact.relationship != null &&
+                        contact.relationship!.trim().isNotEmpty)
+                      Text(
+                        contact.relationship!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF667085),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              // PRIMARY BADGE
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.star_rounded, size: 14, color: primaryColor),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Primary',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 6),
+
+              // Wrap it in a Center widget so it aligns with the badge next to it
+              Center(
+                child: PopupMenuButton<String>(
+                  tooltip: 'More',
+                  // Remove the default padding around the icon button to match the badge
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    color: Color(0xFF667085),
+                  ),
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'edit':
+                        onEdit();
+                        break;
+                      case 'delete':
+                        onDelete();
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) {
+                    return const [
+                      PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 20),
+                            SizedBox(width: 10),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete_outline,
+                              size: 20,
+                              color: Color(0xFFD92D20),
+                            ),
+                            SizedBox(width: 10),
+                            Text('Delete'),
+                          ],
+                        ),
+                      ),
+                    ];
+                  },
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          // ============================================================
+          // CONTACT INFORMATION
+          // ============================================================
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ========================================================
+                // CONTACT TYPE + RELATIONSHIP / SPECIALITY
+                // ========================================================
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    // CONTACT TYPE
+                    _PrimaryContactTag(
+                      label: contact.type.label,
+                      color: primaryColor,
+                    ),
+
+                    // DOCTOR SPECIALITY
+                    if (isDoctor &&
+                        contact.speciality != null &&
+                        contact.speciality!.trim().isNotEmpty)
+                      _PrimaryContactTag(
+                        label: contact.speciality!,
+                        color: const Color(0xFF667085),
+                      ),
+
+                    // PERSONAL RELATIONSHIP
+                    if (!isDoctor &&
+                        contact.relationship != null &&
+                        contact.relationship!.trim().isNotEmpty)
+                      _PrimaryContactTag(
+                        label: contact.relationship!,
+                        color: const Color(0xFF667085),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // ========================================================
+                // PHONE
+                // ========================================================
+                _PrimaryInfoRow(
+                  icon: Icons.phone_outlined,
+                  label: 'Phone',
+                  value: contact.phone,
+                ),
+
+                // ========================================================
+                // EMAIL
+                // ========================================================
+                if (contact.email != null &&
+                    contact.email!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _PrimaryInfoRow(
+                    icon: Icons.email_outlined,
+                    label: 'Email',
+                    value: contact.email!,
+                  ),
+                ],
+
+                // ========================================================
+                // ADDRESS
+                // ========================================================
+                if (contact.address != null &&
+                    contact.address!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _PrimaryInfoRow(
+                    icon: Icons.location_on_outlined,
+                    label: 'Address',
+                    value: contact.address!,
+                    maxLines: 3,
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ============================================================
+          // CALL BUTTON
+          // ============================================================
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onCall,
+              icon: const Icon(Icons.call_rounded, size: 19),
+              label: const Text('Call Contact'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF12B76A),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// PRIMARY CONTACT INFO ROW
+// ============================================================
+
+class _PrimaryInfoRow extends StatelessWidget {
+  const _PrimaryInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.maxLines = 1,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(icon, size: 18, color: const Color(0xFF667085)),
+        ),
+
+        const SizedBox(width: 10),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF98A2B3),
+                ),
+              ),
+
+              const SizedBox(height: 2),
+
+              Text(
+                value,
+                maxLines: maxLines,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF344054),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================
+// PRIMARY CONTACT TAG
+// ============================================================
+
+class _PrimaryContactTag extends StatelessWidget {
+  const _PrimaryContactTag({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
 class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   static const EmergencyCallService _callService = EmergencyCallService();
 
@@ -120,6 +528,22 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   }
 
   // ============================================================
+  // EDIT
+  // ============================================================
+
+  Future<void> _editContact(EmergencyContact contact) async {
+    await _showContactDialog(contact: contact);
+  }
+
+  // ============================================================
+  // CALL CONTACT
+  // ============================================================
+
+  Future<void> _callContact(EmergencyContact contact) async {
+    await _showCallConfirmation(contact);
+  }
+
+  // ============================================================
   // CALL
   // ============================================================
 
@@ -222,7 +646,27 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<EmergencyProvider>();
 
-    final contacts = provider.contactsByType(_selectedType);
+    final contacts = [...provider.contactsByType(_selectedType)];
+
+    contacts.sort((a, b) {
+      if (a.isPrimary && !b.isPrimary) {
+        return -1;
+      }
+
+      if (!a.isPrimary && b.isPrimary) {
+        return 1;
+      }
+
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
+
+    final primaryContacts = contacts
+        .where((contact) => contact.isPrimary)
+        .toList();
+
+    final otherContacts = contacts
+        .where((contact) => !contact.isPrimary)
+        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -257,20 +701,69 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                     type: _selectedType,
                     onAdd: () => _showContactDialog(),
                   )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
-                    itemCount: contacts.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final contact = contacts[index];
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
+                    children: [
+                      // ========================================================
+                      // YOUR PRIMARY CONTACT
+                      // ========================================================
+                      if (primaryContacts.isNotEmpty) ...[
+                        Text(
+                          _selectedType == EmergencyContactType.personal
+                              ? 'YOUR PRIMARY CONTACT'
+                              : 'YOUR PRIMARY CONTACT',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                            color: Color(0xFF667085),
+                          ),
+                        ),
 
-                      return EmergencyContactCard(
-                        contact: contact,
-                        onEdit: () => _showContactDialog(contact: contact),
-                        onDelete: () => _deleteContact(contact),
-                        onCall: () => _showCallConfirmation(contact),
-                      );
-                    },
+                        const SizedBox(height: 10),
+
+                        ...primaryContacts.map(
+                          (contact) => Padding(
+                            padding: const EdgeInsets.only(bottom: 22),
+                            child: _PrimaryEmergencyContactCard(
+                              contact: contact,
+                              onCall: () => _callContact(contact),
+                              onEdit: () => _editContact(contact),
+                              onDelete: () => _deleteContact(contact),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      // ========================================================
+                      // OTHER CONTACTS
+                      // ========================================================
+                      if (otherContacts.isNotEmpty) ...[
+                        const Text(
+                          'OTHER CONTACTS',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                            color: Color(0xFF667085),
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        ...otherContacts.map(
+                          (contact) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: EmergencyContactCard(
+                              contact: contact,
+                              onEdit: () => _editContact(contact),
+                              onDelete: () => _deleteContact(contact),
+                              onCall: () => _callContact(contact),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
           ),
         ],
