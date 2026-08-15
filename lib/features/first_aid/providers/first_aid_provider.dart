@@ -1,8 +1,30 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/first_aid_model.dart';
 
 class FirstAidProvider extends ChangeNotifier {
+  FirstAidProvider() {
+    _initialize();
+  }
+
+  // ============================================================
+  // STORAGE KEYS
+  // ============================================================
+
+  static const String _savedKey =
+      'first_aid_saved';
+
+  static const String _recentKey =
+      'first_aid_recent';
+
+  static const String _viewsKey =
+      'first_aid_views';
+
+  // ============================================================
+  // DATA
+  // ============================================================
+
   final List<FirstAidModel> _items = const [
     FirstAidModel(
       id: 'cuts',
@@ -144,23 +166,123 @@ class FirstAidProvider extends ChangeNotifier {
     ),
   ];
 
+  // ============================================================
+  // STATE
+  // ============================================================
+
+  Set<String> _savedIds = {};
+
+  List<String> _recentIds = [];
+
+  Map<String, int> _viewCounts = {};
+
+  String _searchQuery = '';
+
+  bool _isLoadingUserData = true;
+
+  // ============================================================
+  // GETTERS
+  // ============================================================
+
   List<FirstAidModel> get items =>
       List.unmodifiable(_items);
 
+  String get searchQuery => _searchQuery;
+
+  bool get isLoadingUserData =>
+      _isLoadingUserData;
+
+  // ============================================================
+  // CATEGORIES
+  // ============================================================
+
   List<String> get categories {
     return _items
-        .map((item) => item.category)
+        .map(
+          (item) => item.category,
+        )
         .toSet()
         .toList();
   }
 
-  List<FirstAidModel> byCategory(String category) {
+  // ============================================================
+  // SEARCH
+  // ============================================================
+
+  void setSearchQuery(String value) {
+    _searchQuery = value.trim();
+
+    notifyListeners();
+  }
+
+  void clearSearch() {
+    _searchQuery = '';
+
+    notifyListeners();
+  }
+
+  // ============================================================
+  // SEARCH + CATEGORY
+  // ============================================================
+
+  List<FirstAidModel> searchItems({
+    String category = 'All',
+  }) {
+    final query =
+        _searchQuery.toLowerCase();
+
+    return _items.where((item) {
+      final matchesCategory =
+          category == 'All' ||
+          item.category == category;
+
+      if (!matchesCategory) {
+        return false;
+      }
+
+      if (query.isEmpty) {
+        return true;
+      }
+
+      return item.title
+              .toLowerCase()
+              .contains(query) ||
+          item.description
+              .toLowerCase()
+              .contains(query) ||
+          item.category
+              .toLowerCase()
+              .contains(query) ||
+          item.steps.any(
+            (step) => step
+                .toLowerCase()
+                .contains(query),
+          );
+    }).toList();
+  }
+
+  // ============================================================
+  // CATEGORY
+  // ============================================================
+
+  List<FirstAidModel> byCategory(
+    String category,
+  ) {
     return _items
-        .where((item) => item.category == category)
+        .where(
+          (item) =>
+              item.category == category,
+        )
         .toList();
   }
 
-  FirstAidModel? findById(String id) {
+  // ============================================================
+  // FIND BY ID
+  // ============================================================
+
+  FirstAidModel? findById(
+    String id,
+  ) {
     for (final item in _items) {
       if (item.id == id) {
         return item;
@@ -168,5 +290,280 @@ class FirstAidProvider extends ChangeNotifier {
     }
 
     return null;
+  }
+
+  // ============================================================
+  // SAVED IDS
+  // ============================================================
+
+  List<FirstAidModel> get savedItems {
+    return _recentOrSavedItems(
+      _savedIds,
+    );
+  }
+
+  bool isSaved(String id) {
+    return _savedIds.contains(id);
+  }
+
+  // ============================================================
+  // TOGGLE SAVE
+  // ============================================================
+
+  Future<void> toggleSaved(
+    String id,
+  ) async {
+    if (_savedIds.contains(id)) {
+      _savedIds.remove(id);
+    } else {
+      _savedIds.add(id);
+    }
+
+    notifyListeners();
+
+    await _saveLocalData();
+  }
+
+  // ============================================================
+  // RECENTLY VIEWED
+  // ============================================================
+
+  List<FirstAidModel> get recentItems {
+    return _recentIds
+        .map(findById)
+        .whereType<FirstAidModel>()
+        .toList();
+  }
+
+  // ============================================================
+  // RECORD VIEW
+  // ============================================================
+
+  Future<void> recordView(
+    String id,
+  ) async {
+    // Remove existing occurrence.
+    _recentIds.remove(id);
+
+    // Add to beginning.
+    _recentIds.insert(0, id);
+
+    // Keep only latest 10.
+    if (_recentIds.length > 10) {
+      _recentIds =
+          _recentIds.take(10).toList();
+    }
+
+    // Increase view count.
+    _viewCounts[id] =
+        (_viewCounts[id] ?? 0) + 1;
+
+    notifyListeners();
+
+    await _saveLocalData();
+  }
+
+  // ============================================================
+  // VIEW COUNT
+  // ============================================================
+
+  int viewCount(
+    String id,
+  ) {
+    return _viewCounts[id] ?? 0;
+  }
+
+  // ============================================================
+  // TOP VIEWED
+  // ============================================================
+
+  List<FirstAidModel>
+      get topViewedItems {
+    final viewedItems = _items
+        .where(
+          (item) =>
+              viewCount(item.id) > 0,
+        )
+        .toList();
+
+    viewedItems.sort(
+      (a, b) => viewCount(b.id)
+          .compareTo(
+        viewCount(a.id),
+      ),
+    );
+
+    return viewedItems
+        .take(5)
+        .toList();
+  }
+
+  // ============================================================
+  // EMERGENCY ITEMS
+  // ============================================================
+
+  List<FirstAidModel>
+      get emergencyItems {
+    return _items
+        .where(
+          (item) =>
+              item.category
+                  .toLowerCase() ==
+              'emergency',
+        )
+        .toList();
+  }
+
+  // ============================================================
+  // CLEAR RECENT
+  // ============================================================
+
+  Future<void>
+      clearRecentlyViewed() async {
+    _recentIds.clear();
+
+    notifyListeners();
+
+    await _saveLocalData();
+  }
+
+  // ============================================================
+  // INITIALIZE
+  // ============================================================
+
+  Future<void> _initialize() async {
+    _isLoadingUserData = true;
+
+    notifyListeners();
+
+    try {
+      final preferences =
+          await SharedPreferences
+              .getInstance();
+
+      // --------------------------------------------------------
+      // SAVED
+      // --------------------------------------------------------
+
+      final saved =
+          preferences.getStringList(
+        _savedKey,
+      );
+
+      if (saved != null) {
+        _savedIds =
+            saved.toSet();
+      }
+
+      // --------------------------------------------------------
+      // RECENT
+      // --------------------------------------------------------
+
+      final recent =
+          preferences.getStringList(
+        _recentKey,
+      );
+
+      if (recent != null) {
+        _recentIds =
+            List<String>.from(
+          recent,
+        );
+      }
+
+      // --------------------------------------------------------
+      // VIEW COUNTS
+      // --------------------------------------------------------
+
+      final views =
+          preferences.getStringList(
+        _viewsKey,
+      );
+
+      if (views != null) {
+        _viewCounts = {};
+
+        for (final entry
+            in views) {
+          final parts =
+              entry.split('|');
+
+          if (parts.length != 2) {
+            continue;
+          }
+
+          final count =
+              int.tryParse(
+            parts[1],
+          );
+
+          if (count == null) {
+            continue;
+          }
+
+          _viewCounts[
+              parts[0]] = count;
+        }
+      }
+    } catch (_) {
+      // Keep default empty state.
+    }
+
+    _isLoadingUserData = false;
+
+    notifyListeners();
+  }
+
+  // ============================================================
+  // SAVE LOCAL DATA
+  // ============================================================
+
+  Future<void> _saveLocalData() async {
+    try {
+      final preferences =
+          await SharedPreferences
+              .getInstance();
+
+      await preferences.setStringList(
+        _savedKey,
+        _savedIds.toList(),
+      );
+
+      await preferences.setStringList(
+        _recentKey,
+        _recentIds,
+      );
+
+      final encodedViews =
+          _viewCounts.entries
+              .map(
+                (entry) =>
+                    '${entry.key}|${entry.value}',
+              )
+              .toList();
+
+      await preferences.setStringList(
+        _viewsKey,
+        encodedViews,
+      );
+    } catch (_) {
+      // Ignore local storage failures.
+    }
+  }
+
+  // ============================================================
+  // INTERNAL ITEM MAPPER
+  // ============================================================
+
+  List<FirstAidModel>
+      _recentOrSavedItems(
+    Set<String> ids,
+  ) {
+    return _items
+        .where(
+          (item) =>
+              ids.contains(item.id),
+        )
+        .toList();
   }
 }
