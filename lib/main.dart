@@ -15,6 +15,9 @@ import 'features/blogs/providers/blog_provider.dart';
 import 'features/notifications/providers/notification_provider.dart';
 import 'features/emergency/providers/emergency_provider.dart';
 import 'features/nearby/providers/nearby_provider.dart';
+import 'features/healthcare/providers/doctor_provider.dart';
+import 'features/healthcare/providers/healthcare_facility_provider.dart';
+import 'features/healthcare/providers/nearby_doctor_provider.dart';
 import 'features/profile/providers/settings_provider.dart';
 import 'features/splash/screens/splash_screen.dart';
 
@@ -116,6 +119,12 @@ class _GoCareBootstrapState extends State<GoCareBootstrap> {
         ChangeNotifierProvider(create: (_) => EmergencyProvider()),
 
         ChangeNotifierProvider(create: (_) => NearbyProvider()),
+
+        ChangeNotifierProvider(create: (_) => DoctorProvider()..loadDoctors()),
+
+        ChangeNotifierProvider(create: (_) => HealthcareFacilityProvider()..loadFacilities()),
+
+        ChangeNotifierProvider(create: (_) => NearbyDoctorProvider()),
 
         ChangeNotifierProvider(create: (_) => SettingsProvider()..initialize()),
       ],
