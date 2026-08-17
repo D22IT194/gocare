@@ -253,15 +253,14 @@ class _HomeScreenState extends State<HomeScreen> {
   // HOSPITALS
   // ============================================================
 
-  void _openHospitals() {
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (_) =>
-    //         const HealthcareFacilitiesScreen(),
-    //   ),
-    // );
-  }
+void _openHospitals() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => HealthcareFacilitiesScreen(),
+    ),
+  );
+}
 
   // ============================================================
   // APPOINTMENTS
