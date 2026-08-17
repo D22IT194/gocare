@@ -12,9 +12,9 @@ import '../../emergency/screens/emergency_screen.dart';
 
 import '../../first_aid/screens/first_aid_screen.dart';
 
-// import '../../healthcare/screens/appointments_screen.dart';
-// import '../../healthcare/screens/doctors_screen.dart';
-// import '../../healthcare/screens/healthcare_facilities_screen.dart';
+import '../../healthcare/screens/appointments_screen.dart';
+import '../../healthcare/screens/doctors_screen.dart';
+import '../../healthcare/screens/healthcare_facilities_screen.dart';
 
 import '../../medicine/screens/medicine_screen.dart';
 import '../../medical_equipment/screens/medical_equipment_screen.dart';
@@ -22,6 +22,10 @@ import '../../medical_equipment/screens/medical_equipment_screen.dart';
 import '../../nearby/screens/nearby_screen.dart';
 import 'primary_contact_screen.dart';
 
+import '../../healthcare/screens/appointments_screen.dart';
+import '../../healthcare/screens/doctors_screen.dart';
+import '../../healthcare/screens/hospitals_screen.dart';
+import '../../healthcare/screens/nearby_doctors_screen.dart';
 import '../../notifications/screens/notifications_screen.dart';
 
 import '../../notifications/providers/notification_provider.dart';
@@ -236,13 +240,13 @@ class _HomeScreenState extends State<HomeScreen> {
   // ============================================================
 
   void _openDoctors() {
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (_) =>
-    //         const DoctorsScreen(),
-    //   ),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const DoctorsScreen(),
+      ),
+    );
   }
 
   // ============================================================
@@ -264,13 +268,13 @@ class _HomeScreenState extends State<HomeScreen> {
   // ============================================================
 
   void _openAppointments() {
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (_) =>
-    //         const AppointmentsScreen(),
-    //   ),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const AppointmentsScreen(),
+      ),
+    );
   }
 
   // ============================================================
@@ -2108,3 +2112,169 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
+
+// =============================================================
+// HEALTHCARE SERVICE CARD
+// =============================================================
+
+class _HealthcareServiceCard extends StatelessWidget {
+  const _HealthcareServiceCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFEAECF0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: color, size: 25),
+              ),
+
+              const SizedBox(height: 14),
+
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF172B4D),
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF667085)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================
+// DOCTOR CONSULTATION BANNER
+// =============================================================
+
+class _DoctorConsultationBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1570EF), Color(0xFF1976D2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1570EF).withValues(alpha: 0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.health_and_safety_rounded, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Need a Doctor?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Book top medical specialists nearby',
+                  style: TextStyle(
+                    color: Color(0xFFE0E6ED),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DoctorsScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Book Now',
+                style: TextStyle(
+                  color: Color(0xFF1570EF),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
