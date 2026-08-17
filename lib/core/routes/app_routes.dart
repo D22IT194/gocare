@@ -12,6 +12,8 @@ import '../../features/profile/screens/medical_information_screen.dart';
 import '../../features/profile/screens/profile_information_screen.dart';
 import '../../features/profile/screens/settings_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
+import '../../features/medical_equipment/screens/medical_equipment_screen.dart';
+import '../../features/medicine/screens/medicine_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -29,6 +31,8 @@ class AppRoutes {
   static const String nearby = '/nearby';
   static const String profile = '/profile';
   static const String blogs = '/blogs';
+  static const String medicalEquipment = '/medical-equipment';
+  static const String medicine = '/medicine';
   static const String notifications = '/notifications';
   static const String healthInformation = '/health-information';
   static const String profileInformation = '/profile-information';
@@ -52,6 +56,8 @@ class AppRoutes {
       medicalCard: (_) => const MedicalCardScreen(),
       emergencyContacts: (_) => const EmergencyContactsScreen(),
       settings: (_) => const SettingsScreen(),
+      medicalEquipment: (_) => const MedicalEquipmentScreen(),
+      medicine: (_) => const MedicinesScreen(),
     };
   }
 }

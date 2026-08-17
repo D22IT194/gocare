@@ -843,7 +843,18 @@ GoCare Medical Card
       ),
 
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? SafeArea(
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  _MedicalCardSkeleton(),
+                  const SizedBox(height: 20),
+                  _MedicalDetailsSkeleton(),
+                  const SizedBox(height: 20),
+                  _MedicalActionsSkeleton(),
+                ],
+              ),
+            )
           : SafeArea(
               child: ListView(
                 padding: const EdgeInsets.all(20),
@@ -1321,6 +1332,268 @@ GoCare Medical Card
           ),
         );
       },
+    );
+  }
+}
+
+// ================================================================
+// MEDICAL CARD SKELETON
+// ================================================================
+
+class _MedicalCardSkeleton extends StatefulWidget {
+  const _MedicalCardSkeleton();
+
+  @override
+  State<_MedicalCardSkeleton> createState() => _MedicalCardSkeletonState();
+}
+
+class _MedicalCardSkeletonState extends State<_MedicalCardSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+
+    _opacity = Tween<double>(
+      begin: 0.35,
+      end: 0.75,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Widget _box({
+    required double width,
+    required double height,
+    double radius = 8,
+  }) {
+    return AnimatedBuilder(
+      animation: _opacity,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _opacity.value,
+          child: Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD0D5DD),
+              borderRadius: BorderRadius.circular(radius),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE4E7EC),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _box(width: 48, height: 48, radius: 14),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _box(width: 155, height: 17),
+                    const SizedBox(height: 7),
+                    _box(width: 100, height: 11),
+                  ],
+                ),
+              ),
+              _box(width: 68, height: 68, radius: 10),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _box(width: 190, height: 25),
+          const SizedBox(height: 9),
+          _box(width: 180, height: 13),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: List.generate(
+              5,
+              (_) => _box(width: 132, height: 62, radius: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ================================================================
+// MEDICAL DETAILS SKELETON
+// ================================================================
+
+class _MedicalDetailsSkeleton extends StatelessWidget {
+  const _MedicalDetailsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SkeletonPanel(
+      // Increased because the panel contains
+      // 4 detail rows + spacing.
+      height: 300,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _StaticSkeletonBox(width: 145, height: 18),
+
+          const SizedBox(height: 18),
+
+          ...List.generate(
+            4,
+            (index) => const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _StaticSkeletonBox(width: 22, height: 22, radius: 11),
+
+                  SizedBox(width: 12),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _StaticSkeletonBox(width: 85, height: 11),
+
+                        SizedBox(height: 6),
+
+                        _StaticSkeletonBox(width: double.infinity, height: 14),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ================================================================
+// MEDICAL ACTIONS SKELETON
+// ================================================================
+
+class _MedicalActionsSkeleton extends StatelessWidget {
+  const _MedicalActionsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _StaticSkeletonBox(
+                width: double.infinity,
+                height: 48,
+                radius: 12,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StaticSkeletonBox(
+                width: double.infinity,
+                height: 48,
+                radius: 12,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _StaticSkeletonBox(
+                width: double.infinity,
+                height: 48,
+                radius: 12,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StaticSkeletonBox(
+                width: double.infinity,
+                height: 48,
+                radius: 12,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SkeletonPanel extends StatelessWidget {
+  const _SkeletonPanel({required this.height, required this.child});
+
+  final double height;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: height,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE4E7EC)),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _StaticSkeletonBox extends StatelessWidget {
+  const _StaticSkeletonBox({
+    required this.width,
+    required this.height,
+    this.radius = 7,
+  });
+
+  final double width;
+  final double height;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFD0D5DD),
+        borderRadius: BorderRadius.circular(radius),
+      ),
     );
   }
 }

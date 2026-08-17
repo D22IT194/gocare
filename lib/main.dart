@@ -8,6 +8,10 @@ import 'core/routes/app_routes.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 
+import 'features/medicine/providers/medicine_provider.dart';
+import 'features/medical_equipment/providers/medical_equipment_provider.dart';
+
+import 'features/home/providers/home_provider.dart';
 import 'features/authentication/providers/auth_provider.dart';
 import 'features/authentication/services/auth_service.dart';
 import 'features/first_aid/providers/first_aid_provider.dart';
@@ -106,6 +110,11 @@ class _GoCareBootstrapState extends State<GoCareBootstrap> {
         ChangeNotifierProvider(
           create: (_) => AuthProvider(authService: AuthService()),
         ),
+
+        ChangeNotifierProvider(create: (_) => MedicineProvider()),
+
+        ChangeNotifierProvider(create: (_) => MedicalEquipmentProvider()),
+        ChangeNotifierProvider(create: (_) => HomeProvider()),
 
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
 

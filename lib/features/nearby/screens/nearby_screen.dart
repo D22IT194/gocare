@@ -287,28 +287,27 @@ class _NearbyScreenState extends State<NearbyScreen> {
           // ----------------------------------------------------
           // TITLE
           // ----------------------------------------------------
-          const Text(
-            'Find nearby care',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF172B4D),
-            ),
-          ),
+          // const Text(
+          //   'Find nearby care',
+          //   style: TextStyle(
+          //     fontSize: 24,
+          //     fontWeight: FontWeight.w800,
+          //     color: Color(0xFF172B4D),
+          //   ),
+          // ),
 
-          const SizedBox(height: 6),
+          // const SizedBox(height: 6),
 
-          const Text(
-            'Find healthcare, emergency and '
-            'support services around you.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.45,
-              color: Color(0xFF667085),
-            ),
-          ),
+          // const Text(
+          //   'First select a category or search for a place.',
+          //   style: TextStyle(
+          //     fontSize: 14,
+          //     height: 1.45,
+          //     color: Color(0xFF667085),
+          //   ),
+          // ),
 
-          const SizedBox(height: 16),
+          // const SizedBox(height: 16),
 
           // ----------------------------------------------------
           // SEARCH
@@ -332,7 +331,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
             },
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 15),
 
           // ----------------------------------------------------
           // SEARCH RESULT MODE
@@ -352,7 +351,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
           // RESULTS
           // ----------------------------------------------------
           if (provider.selectedCategory != null) ...[
-            const SizedBox(height: 22),
+            const SizedBox(height: 10),
 
             _SelectedCategoryHeader(
               category: provider.selectedCategory!,
@@ -1401,8 +1400,7 @@ class _NearbyInitialCard extends StatelessWidget {
           // DESCRIPTION
           // ================================================================
           const Text(
-            'Select Categories & Search for a hospital, doctor, pharmacy '
-            'or any healthcare service nearby.',
+            'Select Categories & Search for a healthcare service nearby you.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

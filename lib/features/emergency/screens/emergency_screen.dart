@@ -1930,7 +1930,7 @@ class _PrimaryInfoRow extends StatelessWidget {
 }
 
 // ============================================================================
-// HERO CARD
+// HERO CARD (CRASH-PROOF MEDIUM HORIZONTAL VERSION)
 // ============================================================================
 
 class _EmergencyHeroCard extends StatelessWidget {
@@ -1942,78 +1942,101 @@ class _EmergencyHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFF1F0), Color(0xFFFFF8F7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          colors: [Color(0xFFFEF3F2), Color(0xFFFFFDFD)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFECACA)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFFEE4E2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD92D20).withValues(alpha: 0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // 1. Left Side: Clean Emergency Icon
           Container(
-            width: 58,
-            height: 58,
+            width: 46,
+            height: 46,
             decoration: const BoxDecoration(
-              color: Color(0xFFFFE4E2),
+              color: Color(0xFFFEE4E2),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.emergency_rounded,
               color: Color(0xFFD92D20),
-              size: 32,
+              size: 24,
             ),
           ),
+          const SizedBox(width: 14),
 
-          const SizedBox(height: 12),
-
-          const Text(
-            'Need emergency help?',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF7A271A),
-            ),
-          ),
-
-          const SizedBox(height: 5),
-
-          const Text(
-            'For immediate emergency assistance, call 112.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: Color(0xFF912018),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onCall,
-              icon: const Icon(Icons.call_rounded, size: 22),
-              label: const Text(
-                'CALL 112 NOW',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.3,
+          // 2. Center: Compact Text Layout
+          Expanded(
+            flex: 2, // Controls proportions explicitly 
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Emergency Help?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF912018),
+                    letterSpacing: -0.2,
+                  ),
                 ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD92D20),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                const SizedBox(height: 3),
+                const Text(
+                  'Call 112 now',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFFB42318),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // 3. Right Side: Wrapped inside Expanded to stop Infinite Width Crashes
+          Expanded(
+            flex: 2, // Safely shares the row layout width constraints
+            child: SizedBox(
+              height: 40,
+              child: ElevatedButton.icon(
+                onPressed: onCall,
+                icon: const Icon(Icons.phone_forwarded_rounded, size: 14),
+                label: const Text(
+                  'CALL 112',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD92D20),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(horizontal: 8), // Snug fit padding boundary
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
@@ -2023,6 +2046,7 @@ class _EmergencyHeroCard extends StatelessWidget {
     );
   }
 }
+
 
 // ============================================================================
 // SEARCH FIELD
